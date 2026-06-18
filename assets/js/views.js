@@ -159,6 +159,7 @@
             <button data-v="no" class="${it.result === 'no' ? 'on-no' : ''}">مخالف</button>
             <button data-v="na" class="${it.result === 'na' ? 'on-na' : ''}">لا ينطبق</button>
           </div>
+          <button class="btn-secondary btn-sm ai-eval" title="تقييم البند بالذكاء الاصطناعي">🤖</button>
         </div>`).join('')}`).join('');
 
     U.modal('تنفيذ التدقيق: ' + insp.templateName, `
@@ -173,7 +174,14 @@
     };
     recompute();
 
-    U.$('#insp-run').addEventListener('click', (e) => {
+    U.$('#insp-run').addEventListener('click', async (e) => {
+      const aiBtn = e.target.closest('.ai-eval');
+      if (aiBtn) {
+        const item = aiBtn.closest('.check-item');
+        const si = +item.dataset.s, ii = +item.dataset.i;
+        Views.aiEvaluateItem(insp, si, ii, item);
+        return;
+      }
       const btn = e.target.closest('.seg button'); if (!btn) return;
       const item = btn.closest('.check-item');
       const si = +item.dataset.s, ii = +item.dataset.i, v = btn.dataset.v;
@@ -199,6 +207,47 @@
       U.toast('تم حفظ التدقيق' + (created ? ` وإنشاء ${created} حالة عدم مطابقة` : ''), 'ok');
       App.render();
     };
+  };
+
+  Views.aiEvaluateItem = async function (insp, si, ii, itemEl) {
+    // لوحة نتائج مدمجة تحت البند (دون فتح نافذة جديدة)
+    let panel = itemEl.nextElementSibling;
+    if (panel && panel.classList.contains('ai-panel')) { panel.remove(); return; }
+    panel = document.createElement('div');
+    panel.className = 'ai-panel card';
+    panel.style.cssText = 'margin:-4px 0 12px;background:#f0fdfa;border-color:#99f6e4';
+    panel.innerHTML = '<span class="muted">⏳ يقيّم النظام البند...</span>';
+    itemEl.insertAdjacentElement('afterend', panel);
+    const text = insp.sections[si].items[ii].text;
+    try {
+      const r = await window.AI.evaluateItem(text);
+      panel.innerHTML = `
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <strong>🤖 تقييم البند</strong>
+          ${U.badge('مستوى الخطورة: ' + (r.risk || '—'), r.risk === 'عالٍ' ? 'red' : r.risk === 'متوسط' ? 'amber' : 'green')}
+          <span class="muted" style="margin-inline-start:auto;font-size:12px">${r.source === 'ai' ? 'ذكاء اصطناعي' : 'محلي'}</span>
+        </div>
+        <p style="font-size:13px;margin-bottom:6px"><strong>الملاحظة:</strong> ${esc(r.clarity || '')}</p>
+        <p style="font-size:13px;margin-bottom:6px"><strong>صياغة محسّنة:</strong> ${esc(r.improved || '')}</p>
+        <p style="font-size:13px;margin-bottom:6px"><strong>إرشاد التحقق:</strong> ${esc(r.guidance || '')}</p>
+        ${r.reference ? `<p class="muted" style="font-size:12px">المرجع: ${esc(r.reference)}</p>` : ''}
+        <div class="form-actions" style="margin-top:8px">
+          <button class="btn-primary btn-sm" id="ai-apply">✓ تحديث صياغة البند</button>
+          <button class="btn-secondary btn-sm" id="ai-close">إغلاق</button>
+        </div>`;
+      panel.querySelector('#ai-close').onclick = () => panel.remove();
+      const applyBtn = panel.querySelector('#ai-apply');
+      if (!r.improved) applyBtn.style.display = 'none';
+      else applyBtn.onclick = () => {
+        insp.sections[si].items[ii].text = r.improved;
+        S.update('inspections', insp.id, { sections: insp.sections });
+        itemEl.querySelector('.ci-text').textContent = r.improved;
+        panel.remove();
+        U.toast('تم تحديث صياغة البند', 'ok');
+      };
+    } catch (e) {
+      panel.innerHTML = `<span style="color:#dc2626">⚠ ${esc(e.message)}</span> <button class="btn-secondary btn-sm" onclick="this.parentElement.remove()">إغلاق</button>`;
+    }
   };
 
   Views.viewInspection = function (id) {
@@ -401,22 +450,40 @@
   };
 
   Views.editNC = function (id) {
-    const n = id ? S.get('ncs', id) : { title: '', severity: 'متوسطة', source: 'تدقيق داخلي', status: 'مفتوحة', date: S.todayISO(), owner: App.user.name, dueDate: S.shift(7), action: '', rootCause: '' };
+    const n = id ? S.get('ncs', id) : { title: '', severity: 'متوسطة', source: 'تدقيق داخلي', status: 'مفتوحة', date: S.todayISO(), owner: App.user.name, dueDate: S.shift(7), action: '', preventiveAction: '', rootCause: '' };
     const sel = (val, opts) => opts.map(o => `<option ${o === val ? 'selected' : ''}>${o}</option>`).join('');
     U.modal(id ? 'معالجة حالة عدم المطابقة' : 'حالة عدم مطابقة جديدة', `
       <div class="form-grid two">
         <div class="field field-full"><label>وصف المخالفة</label><input name="title" value="${esc(n.title)}" /></div>
         <div class="field"><label>الخطورة</label><select name="severity">${sel(n.severity, ['حرجة', 'عالية', 'متوسطة', 'منخفضة'])}</select></div>
-        <div class="field"><label>المصدر</label><select name="source">${sel(n.source, ['تدقيق داخلي', 'تدقيق GMP', 'مراقبة الحرارة', 'تفتيش رسمي', 'شكوى عميل', 'أخرى'])}</select></div>
+        <div class="field"><label>المصدر</label><select name="source">${sel(n.source, ['تدقيق داخلي', 'تدقيق GMP', 'مراقبة الحرارة', 'تفتيش رسمي', 'تحليل بالذكاء الاصطناعي', 'شكوى عميل', 'أخرى'])}</select></div>
         <div class="field"><label>المسؤول عن المعالجة</label><input name="owner" value="${esc(n.owner)}" /></div>
         <div class="field"><label>تاريخ الاستحقاق</label><input name="dueDate" type="date" value="${esc(n.dueDate)}" /></div>
         <div class="field"><label>الحالة</label><select name="status">${sel(n.status, ['مفتوحة', 'قيد المعالجة', 'مغلقة'])}</select></div>
         <div class="field"><label>التاريخ</label><input name="date" type="date" value="${esc(n.date)}" /></div>
         <div class="field field-full"><label>السبب الجذري</label><textarea name="rootCause">${esc(n.rootCause)}</textarea></div>
-        <div class="field field-full"><label>الإجراء التصحيحي</label><textarea name="action">${esc(n.action)}</textarea></div>
+        <div class="field field-full"><label>الإجراء التصحيحي (الفوري)</label><textarea name="action">${esc(n.action)}</textarea></div>
+        <div class="field field-full"><label>الإجراء الوقائي (لمنع التكرار)</label><textarea name="preventiveAction">${esc(n.preventiveAction || '')}</textarea></div>
       </div>
-      <div class="form-actions" style="margin-top:14px"><button class="btn-primary" id="save">حفظ</button></div>`,
+      <div class="form-actions" style="margin-top:14px">
+        <button class="btn-primary" id="save">حفظ</button>
+        <button class="btn-secondary" id="ai-capa">🤖 اقترح الإجراءات بالذكاء الاصطناعي</button>
+        <span id="ai-state" class="muted" style="align-self:center"></span>
+      </div>`,
       { wide: true, onOpen: (root) => {
+        U.$('#ai-capa').onclick = async () => {
+          const title = root.querySelector('[name=title]').value.trim();
+          if (!title) return U.toast('أدخل وصف المخالفة أولًا', 'err');
+          const st = U.$('#ai-state'); st.textContent = '⏳ جارٍ التحليل...';
+          try {
+            const r = await window.AI.generateCapa(title);
+            if (r.severity) root.querySelector('[name=severity]').value = ['حرجة','عالية','متوسطة','منخفضة'].includes(r.severity) ? r.severity : root.querySelector('[name=severity]').value;
+            if (r.rootCause) root.querySelector('[name=rootCause]').value = r.rootCause;
+            root.querySelector('[name=action]').value = r.corrective + (r.reference ? '\n[المرجع: ' + r.reference + ']' : '');
+            root.querySelector('[name=preventiveAction]').value = r.preventive;
+            st.textContent = r.source === 'ai' ? '✓ تم التوليد بالذكاء الاصطناعي' : '✓ اقتراح محلي (فعّل الذكاء الاصطناعي لنتائج أدق)';
+          } catch (e) { st.textContent = '⚠ ' + e.message; }
+        };
         U.$('#save').onclick = () => {
           const f = U.readForm(root);
           if (!f.title) return U.toast('أدخل وصف المخالفة', 'err');
@@ -586,6 +653,158 @@
 
   Views.delPest = function (id) { S.remove('pest', id); U.toast('تم الحذف', 'ok'); App.render(); };
 
+  /* ===================== الرصد بالتصوير (ذكاء اصطناعي) ===================== */
+  Views._monImg = null;
+  Views._monViolations = [];
+
+  Views.monitor = function () {
+    const db = S.load();
+    const history = (db.monitors || []).slice(0, 8);
+    const aiOn = window.AI.enabled();
+    return `
+      <div class="page-head">
+        <div><h2>الرصد بالتصوير الذكي</h2><p>صوّر موقع العمل ليقوم الذكاء الاصطناعي برصد المخالفات تلقائيًا واقتراح الإجراءات التصحيحية والوقائية</p></div>
+      </div>
+      ${aiOn ? '' : `<div class="card" style="margin-bottom:16px;background:#fffbeb;border-color:#fde68a">
+        <strong>⚠ خدمة الذكاء الاصطناعي غير مفعّلة</strong>
+        <p class="muted" style="margin-top:6px">الرصد الآلي للمخالفات من الصور يتطلب تفعيل الخدمة من <a href="#" onclick="App.go('settings');return false">الإعدادات</a>. يمكنك حاليًا التقاط صورة وإضافة ملاحظة نصية ليقترح النظام الإجراءات المناسبة من قاعدة المواصفات.</p></div>`}
+      <div class="grid cols-2">
+        <div class="card">
+          <div class="card-title">📷 التقاط / رفع صورة</div>
+          <div id="mon-preview" style="margin-bottom:12px;text-align:center;min-height:160px;display:grid;place-items:center;background:#f8fafc;border-radius:12px;border:1.5px dashed var(--line)">
+            <span class="muted">لم يتم اختيار صورة بعد</span>
+          </div>
+          <div class="field" style="margin-bottom:10px">
+            <input type="file" id="mon-file" accept="image/*" capture="environment" />
+          </div>
+          <div class="field" style="margin-bottom:12px">
+            <label>ملاحظة المفتش (اختياري)</label>
+            <textarea id="mon-note" placeholder="مثال: بقايا طعام على سطح التحضير، أو باب الثلاجة مفتوح"></textarea>
+          </div>
+          <button class="btn-primary" id="mon-analyze" disabled>🔍 تحليل ورصد المخالفات</button>
+          <span id="mon-state" class="muted" style="margin-inline-start:10px"></span>
+        </div>
+        <div class="card">
+          <div class="card-title">📋 نتائج الرصد</div>
+          <div id="mon-results">${U.empty('ستظهر المخالفات المرصودة هنا بعد التحليل', '🔎')}</div>
+        </div>
+      </div>
+      ${history.length ? `<div class="card section-gap">
+        <div class="card-title">🕘 سجل عمليات الرصد</div>
+        <div class="table-wrap" style="border:none"><table>
+          <thead><tr><th>التاريخ</th><th>الملخص</th><th>المخالفات</th><th>المصدر</th></tr></thead>
+          <tbody>${history.map(h => `<tr>
+            <td>${fmtDate(h.date)} <small class="muted">${esc(h.time || '')}</small></td>
+            <td>${esc(h.summary || '—')}</td>
+            <td>${U.badge(h.count + ' مخالفة', h.count ? 'red' : 'green')}</td>
+            <td>${h.source === 'ai' ? U.badge('ذكاء اصطناعي', 'blue') : U.badge('محلي', 'gray')}</td>
+          </tr>`).join('')}</tbody></table></div>
+      </div>` : ''}`;
+  };
+
+  Views.bind_monitor = function () {
+    Views._monImg = null;
+    const fileEl = U.$('#mon-file'), analyzeBtn = U.$('#mon-analyze');
+    if (!fileEl) return;
+    fileEl.onchange = () => {
+      const file = fileEl.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const m = /^data:(.*?);base64,(.*)$/.exec(reader.result);
+        if (!m) return U.toast('تعذّر قراءة الصورة', 'err');
+        Views._monImg = { mediaType: m[1], data: m[2] };
+        U.$('#mon-preview').innerHTML = `<img src="${reader.result}" style="max-width:100%;max-height:240px;border-radius:10px" alt="معاينة"/>`;
+        analyzeBtn.disabled = false;
+      };
+      reader.readAsDataURL(file);
+    };
+
+    analyzeBtn.onclick = async () => {
+      const note = U.$('#mon-note').value.trim();
+      if (!Views._monImg && !note) return U.toast('اختر صورة أو أضف ملاحظة', 'err');
+      const st = U.$('#mon-state'); st.textContent = '⏳ جارٍ التحليل...';
+      analyzeBtn.disabled = true;
+      try {
+        const r = await window.AI.analyzePhoto(Views._monImg || { mediaType: 'image/jpeg', data: '' }, note);
+        st.textContent = '';
+        Views._monViolations = r.violations || [];
+        const box = U.$('#mon-results');
+        if (r.error) { box.innerHTML = `<div class="empty"><span class="ic">⚠</span>${esc(r.error)}</div>`; analyzeBtn.disabled = false; return; }
+        if (r.needsKey) { box.innerHTML = U.empty(r.hint, '🔑'); analyzeBtn.disabled = false; return; }
+
+        // حفظ سجل خفيف
+        S.add('monitors', { id: S.uid('mon'), date: S.todayISO(), time: new Date().toTimeString().slice(0,5), summary: r.summary || '', count: (r.violations||[]).length, source: r.source });
+
+        let html = `<p class="muted" style="margin-bottom:12px">${esc(r.summary || '')} ${r.source === 'ai' ? U.badge('ذكاء اصطناعي', 'blue') : U.badge('محلي', 'gray')}</p>`;
+        if (!Views._monViolations.length) {
+          html += `<div class="empty" style="padding:20px"><span class="ic">✅</span>لم تُرصد مخالفات — المشهد مطابق</div>`;
+        } else {
+          html += Views._monViolations.map((v, i) => `
+            <div class="card" style="margin-bottom:10px;border-color:#fecaca;background:#fef2f2">
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+                <strong style="flex:1">${esc(v.title)}</strong>${U.statusBadge(v.severity || 'متوسطة')}
+              </div>
+              <p style="font-size:13px;margin-bottom:4px"><strong>الإجراء التصحيحي:</strong> ${esc(v.corrective || '')}</p>
+              <p style="font-size:13px;margin-bottom:4px"><strong>الإجراء الوقائي:</strong> ${esc(v.preventive || '')}</p>
+              ${v.reference ? `<p class="muted" style="font-size:12px;margin-bottom:8px">المرجع: ${esc(v.reference)}</p>` : ''}
+              <button class="btn-primary btn-sm" onclick="Views.ncFromMonitor(${i})">+ إنشاء حالة عدم مطابقة</button>
+            </div>`).join('');
+        }
+        box.innerHTML = html;
+        // تحديث عدّادات القائمة الجانبية
+        App.buildNav();
+        U.toast(Views._monViolations.length ? `تم رصد ${Views._monViolations.length} مخالفة` : 'لا توجد مخالفات', Views._monViolations.length ? 'err' : 'ok');
+      } catch (e) {
+        st.textContent = '';
+        U.$('#mon-results').innerHTML = `<div class="empty"><span class="ic">⚠</span>${esc(e.message)}</div>`;
+      }
+      analyzeBtn.disabled = false;
+    };
+  };
+
+  Views.ncFromMonitor = function (i) {
+    const v = Views._monViolations[i]; if (!v) return;
+    S.add('ncs', {
+      id: S.uid('nc'), title: v.title, severity: ['حرجة','عالية','متوسطة','منخفضة'].includes(v.severity) ? v.severity : 'متوسطة',
+      source: 'تحليل بالذكاء الاصطناعي', status: 'مفتوحة', date: S.todayISO(), owner: App.user.name, dueDate: S.shift(3),
+      action: (v.corrective || '') + (v.reference ? '\n[المرجع: ' + v.reference + ']' : ''),
+      preventiveAction: v.preventive || '', rootCause: '',
+    });
+    U.toast('تم إنشاء حالة عدم مطابقة من المخالفة المرصودة', 'ok');
+    App.buildNav();
+  };
+
+  /* ===================== المواصفات والمعايير ===================== */
+  Views.standards = function () {
+    const regions = ['سعودية', 'خليجية', 'عالمية'];
+    const byRegion = (r) => window.Standards.STANDARDS.filter(s => s.region === r);
+    const card = (s) => `
+      <div class="card" style="margin-bottom:14px">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+          <strong style="flex:1">${esc(s.title)}</strong>
+          ${U.badge(s.code, 'blue')}
+        </div>
+        <p class="muted" style="font-size:13px;margin-bottom:8px">${esc(s.authority)} — ${esc(s.scope)}</p>
+        <ul style="margin-inline-start:18px;font-size:13.5px;line-height:1.9">${s.points.map(p => `<li>${esc(p)}</li>`).join('')}</ul>
+      </div>`;
+    return `
+      <div class="page-head">
+        <div><h2>المواصفات والمعايير المرجعية</h2><p>قاعدة المعرفة التي يستند إليها النظام في التقييم والرصد — سعودية وخليجية وعالمية</p></div>
+      </div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title">🌡️ الحدود الحرارية الحرجة المرجعية</div>
+        <div class="table-wrap" style="border:none"><table>
+          <thead><tr><th>البند</th><th>الحد المرجعي</th><th>المرجع</th></tr></thead>
+          <tbody>${window.Standards.CRITICAL_LIMITS.map(l => `<tr>
+            <td><strong>${esc(l.item)}</strong></td><td>${esc(l.limit)}</td><td class="muted">${esc(l.ref)}</td>
+          </tr>`).join('')}</tbody></table></div>
+      </div>
+      ${regions.map(r => `
+        <h3 style="margin:18px 0 12px;color:#0f766e">${r === 'سعودية' ? '🇸🇦 المواصفات السعودية' : r === 'خليجية' ? '🌙 المواصفات الخليجية (GSO)' : '🌍 المواصفات العالمية'}</h3>
+        ${byRegion(r).map(card).join('')}
+      `).join('')}`;
+  };
+
   /* ===================== التقارير والجاهزية ===================== */
   Views.reports = function () {
     const m = S.metrics();
@@ -669,6 +888,21 @@
         </div>
       </div>
       <div class="card section-gap" style="max-width:560px">
+        <div class="card-title">🤖 الذكاء الاصطناعي (Claude)</div>
+        <p class="muted" style="margin-bottom:14px">عند التفعيل يستخدم النظام نموذج <strong>${esc(window.AI.MODEL)}</strong> لتحليل الصور ورصد المخالفات وتقييم البنود وتوليد الإجراءات. يُحفظ المفتاح محليًا على جهازك فقط ولا يُرسل لأي جهة عدا خدمة Claude.</p>
+        <div class="form-grid">
+          <div class="field"><label>مفتاح Claude API</label><input id="ai-key" type="password" placeholder="sk-ant-..." value="${esc(window.AI.cfg().apiKey || '')}" /></div>
+          <div class="field"><label style="display:flex;gap:8px;align-items:center;font-weight:400">
+            <input type="checkbox" id="ai-enabled" ${window.AI.cfg().enabled !== false ? 'checked' : ''}/> تفعيل خدمة الذكاء الاصطناعي
+          </label></div>
+          <div class="form-actions">
+            <button class="btn-primary" id="ai-save">حفظ الإعدادات</button>
+            <button class="btn-secondary" id="ai-test">اختبار الاتصال</button>
+            <span id="ai-test-state" class="muted" style="align-self:center"></span>
+          </div>
+        </div>
+      </div>
+      <div class="card section-gap" style="max-width:560px">
         <div class="card-title">🗃️ إدارة البيانات</div>
         <p class="muted" style="margin-bottom:14px">تُحفظ جميع البيانات محليًا على هذا الجهاز. يمكنك تصدير نسخة احتياطية أو إعادة ضبط النظام.</p>
         <div class="form-actions">
@@ -691,6 +925,23 @@
     if (reset) reset.onclick = () => U.confirmDialog('سيتم حذف جميع البيانات الحالية واستعادة البيانات التجريبية. متابعة؟', () => {
       S.reset(); U.toast('تمت إعادة الضبط', 'ok'); App.render();
     }, 'إعادة الضبط');
+
+    const aiSave = U.$('#ai-save');
+    if (aiSave) aiSave.onclick = () => {
+      window.AI.setCfg({ apiKey: U.$('#ai-key').value.trim(), enabled: U.$('#ai-enabled').checked });
+      U.toast('تم حفظ إعدادات الذكاء الاصطناعي', 'ok');
+    };
+    const aiTest = U.$('#ai-test');
+    if (aiTest) aiTest.onclick = async () => {
+      window.AI.setCfg({ apiKey: U.$('#ai-key').value.trim(), enabled: U.$('#ai-enabled').checked });
+      const st = U.$('#ai-test-state');
+      if (!window.AI.hasKey()) { st.textContent = '⚠ أدخل المفتاح أولًا'; return; }
+      st.textContent = '⏳ جارٍ الاختبار...';
+      try {
+        const r = await window.AI.generateCapa('اختبار اتصال: درجة حرارة ثلاجة مرتفعة');
+        st.textContent = r.source === 'ai' ? '✓ الاتصال ناجح والخدمة تعمل' : '⚠ تعذّر الاتصال — يعمل النظام بالوضع المحلي';
+      } catch (e) { st.textContent = '⚠ ' + e.message; }
+    };
   };
 
   window.Views = Views;

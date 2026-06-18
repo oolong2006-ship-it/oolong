@@ -7,11 +7,13 @@
   const ROUTES = [
     { key: 'dashboard', icon: '📊', label: 'لوحة المعلومات', title: 'لوحة المعلومات' },
     { key: 'inspections', icon: '📋', label: 'التفتيش الذاتي و GMP', title: 'التفتيش الذاتي و GMP' },
+    { key: 'monitor', icon: '📷', label: 'الرصد بالتصوير الذكي', title: 'الرصد بالتصوير الذكي' },
     { key: 'temperature', icon: '🌡️', label: 'مراقبة الحرارة', title: 'مراقبة درجات الحرارة' },
     { key: 'employees', icon: '👥', label: 'العاملون والشهادات', title: 'العاملون والشهادات الصحية' },
     { key: 'nc', icon: '⚠️', label: 'عدم المطابقة (CAPA)', title: 'عدم المطابقة والإجراءات التصحيحية' },
     { key: 'suppliers', icon: '🚚', label: 'الموردون', title: 'اعتماد الموردين' },
     { key: 'cleaning', icon: '🧹', label: 'التنظيف والآفات', title: 'التنظيف ومكافحة الآفات' },
+    { key: 'standards', icon: '📚', label: 'المواصفات والمعايير', title: 'المواصفات والمعايير المرجعية' },
     { key: 'reports', icon: '📈', label: 'التقارير والجاهزية', title: 'التقارير وجاهزية التفتيش' },
     { key: 'settings', icon: '⚙️', label: 'الإعدادات', title: 'الإعدادات' },
   ];
@@ -83,6 +85,8 @@
       const fn = V[this.current];
       U.$('#content').innerHTML = fn ? fn() : U.empty('الصفحة غير متاحة');
       if (this.current === 'settings') V.bindSettings();
+      const bind = V['bind_' + this.current];
+      if (typeof bind === 'function') bind();
       this.buildNav(); // تحديث عدّادات التنبيه
       U.$('#nav').querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.key === this.current));
     },

@@ -116,9 +116,9 @@
     ];
 
     const ncs = [
-      { id: uid('nc'), title: 'ثلاجة اللحوم تعمل عند 8°م (أعلى من الحد)', severity: 'حرجة', source: 'مراقبة الحرارة', status: 'مفتوحة', date: shift(-2), owner: 'أحمد المطيري', dueDate: shift(1), action: 'استدعاء الصيانة وفحص الكمبروسر، نقل المنتجات لثلاجة بديلة', rootCause: 'عطل في وحدة التبريد' },
-      { id: uid('nc'), title: 'انتهاء الشهادة الصحية لأحد العاملين', severity: 'عالية', source: 'تدقيق داخلي', status: 'قيد المعالجة', date: shift(-5), owner: 'سعاد العتيبي', dueDate: shift(3), action: 'إيقاف العامل عن المناولة المباشرة وتجديد الشهادة', rootCause: 'عدم متابعة تواريخ الصلاحية' },
-      { id: uid('nc'), title: 'عدم وضوح ترميز ألواح التقطيع اللونية', severity: 'متوسطة', source: 'تدقيق GMP', status: 'مغلقة', date: shift(-12), owner: 'سعاد العتيبي', dueDate: shift(-7), action: 'استبدال الألواح وتدريب العاملين على الترميز اللوني', rootCause: 'نقص توعية' },
+      { id: uid('nc'), title: 'ثلاجة اللحوم تعمل عند 8°م (أعلى من الحد)', severity: 'حرجة', source: 'مراقبة الحرارة', status: 'مفتوحة', date: shift(-2), owner: 'أحمد المطيري', dueDate: shift(1), action: 'استدعاء الصيانة وفحص الكمبروسر، نقل المنتجات لثلاجة بديلة', preventiveAction: 'جدولة صيانة وقائية دورية وتركيب إنذار حراري آلي', rootCause: 'عطل في وحدة التبريد' },
+      { id: uid('nc'), title: 'انتهاء الشهادة الصحية لأحد العاملين', severity: 'عالية', source: 'تدقيق داخلي', status: 'قيد المعالجة', date: shift(-5), owner: 'سعاد العتيبي', dueDate: shift(3), action: 'إيقاف العامل عن المناولة المباشرة وتجديد الشهادة', preventiveAction: 'نظام تنبيهات قبل انتهاء الشهادات بـ30 يومًا', rootCause: 'عدم متابعة تواريخ الصلاحية' },
+      { id: uid('nc'), title: 'عدم وضوح ترميز ألواح التقطيع اللونية', severity: 'متوسطة', source: 'تدقيق GMP', status: 'مغلقة', date: shift(-12), owner: 'سعاد العتيبي', dueDate: shift(-7), action: 'استبدال الألواح وتدريب العاملين على الترميز اللوني', preventiveAction: 'اعتماد دليل الترميز اللوني وتدريب توعوي ربع سنوي', rootCause: 'نقص توعية' },
     ];
 
     const suppliers = [
