@@ -420,7 +420,7 @@
     const db = S.load();
     const list = [...db.ncs].sort((a, b) => b.date.localeCompare(a.date));
     const rows = list.map(n => `<tr>
-      <td><strong>${esc(n.title)}</strong><br><small class="muted">${esc(n.source)}</small></td>
+      <td><strong>${n.photo ? '📷 ' : ''}${esc(n.title)}</strong><br><small class="muted">${esc(n.source)}</small></td>
       <td>${U.statusBadge(n.severity)}</td>
       <td>${esc(n.owner)}</td>
       <td>${fmtDate(n.dueDate)}</td>
@@ -453,6 +453,7 @@
     const n = id ? S.get('ncs', id) : { title: '', severity: 'متوسطة', source: 'تدقيق داخلي', status: 'مفتوحة', date: S.todayISO(), owner: App.user.name, dueDate: S.shift(7), action: '', preventiveAction: '', rootCause: '' };
     const sel = (val, opts) => opts.map(o => `<option ${o === val ? 'selected' : ''}>${o}</option>`).join('');
     U.modal(id ? 'معالجة حالة عدم المطابقة' : 'حالة عدم مطابقة جديدة', `
+      ${n.photo ? `<div style="text-align:center;margin-bottom:14px"><img src="${n.photo}" onclick="Views.zoomImg('${n.photo}')" style="max-height:200px;max-width:100%;border-radius:10px;cursor:pointer;border:1px solid var(--line)" alt="الدليل المصوّر"/><div class="muted" style="font-size:12px;margin-top:4px">📷 دليل مصوّر مرفق — اضغط للتكبير</div></div>` : ''}
       <div class="form-grid two">
         <div class="field field-full"><label>وصف المخالفة</label><input name="title" value="${esc(n.title)}" /></div>
         <div class="field"><label>الخطورة</label><select name="severity">${sel(n.severity, ['حرجة', 'عالية', 'متوسطة', 'منخفضة'])}</select></div>
@@ -655,7 +656,25 @@
 
   /* ===================== الرصد بالتصوير (ذكاء اصطناعي) ===================== */
   Views._monImg = null;
+  Views._monThumb = null;
   Views._monViolations = [];
+
+  // تصغير الصورة لتخزينها كدليل مصوّر دون إثقال التخزين المحلي
+  Views._downscale = function (dataUrl, maxDim, quality) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width: w, height: h } = img;
+        const scale = Math.min(1, maxDim / Math.max(w, h));
+        w = Math.round(w * scale); h = Math.round(h * scale);
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        try { resolve(c.toDataURL('image/jpeg', quality)); } catch (e) { resolve(dataUrl); }
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  };
 
   Views.monitor = function () {
     const db = S.load();
@@ -692,8 +711,9 @@
       ${history.length ? `<div class="card section-gap">
         <div class="card-title">🕘 سجل عمليات الرصد</div>
         <div class="table-wrap" style="border:none"><table>
-          <thead><tr><th>التاريخ</th><th>الملخص</th><th>المخالفات</th><th>المصدر</th></tr></thead>
+          <thead><tr><th>الدليل</th><th>التاريخ</th><th>الملخص</th><th>المخالفات</th><th>المصدر</th></tr></thead>
           <tbody>${history.map(h => `<tr>
+            <td>${h.thumb ? `<img src="${h.thumb}" onclick="Views.zoomImg('${h.thumb}')" style="width:54px;height:42px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--line)" alt="دليل"/>` : '<span class="muted">—</span>'}</td>
             <td>${fmtDate(h.date)} <small class="muted">${esc(h.time || '')}</small></td>
             <td>${esc(h.summary || '—')}</td>
             <td>${U.badge(h.count + ' مخالفة', h.count ? 'red' : 'green')}</td>
@@ -703,17 +723,18 @@
   };
 
   Views.bind_monitor = function () {
-    Views._monImg = null;
+    Views._monImg = null; Views._monThumb = null;
     const fileEl = U.$('#mon-file'), analyzeBtn = U.$('#mon-analyze');
     if (!fileEl) return;
     fileEl.onchange = () => {
       const file = fileEl.files[0]; if (!file) return;
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onload = async () => {
         const m = /^data:(.*?);base64,(.*)$/.exec(reader.result);
         if (!m) return U.toast('تعذّر قراءة الصورة', 'err');
         Views._monImg = { mediaType: m[1], data: m[2] };
         U.$('#mon-preview').innerHTML = `<img src="${reader.result}" style="max-width:100%;max-height:240px;border-radius:10px" alt="معاينة"/>`;
+        Views._monThumb = await Views._downscale(reader.result, 480, 0.55); // دليل مصوّر مضغوط
         analyzeBtn.disabled = false;
       };
       reader.readAsDataURL(file);
@@ -732,8 +753,9 @@
         if (r.error) { box.innerHTML = `<div class="empty"><span class="ic">⚠</span>${esc(r.error)}</div>`; analyzeBtn.disabled = false; return; }
         if (r.needsKey) { box.innerHTML = U.empty(r.hint, '🔑'); analyzeBtn.disabled = false; return; }
 
-        // حفظ سجل خفيف
-        S.add('monitors', { id: S.uid('mon'), date: S.todayISO(), time: new Date().toTimeString().slice(0,5), summary: r.summary || '', count: (r.violations||[]).length, source: r.source });
+        // حفظ السجل مع الدليل المصوّر (مع تقليم آخر 20)
+        S.add('monitors', { id: S.uid('mon'), date: S.todayISO(), time: new Date().toTimeString().slice(0,5), summary: r.summary || '', count: (r.violations||[]).length, source: r.source, thumb: Views._monThumb || '' });
+        const mc = S.col('monitors'); if (mc.length > 20) { mc.length = 20; S.save(); }
 
         let html = `<p class="muted" style="margin-bottom:12px">${esc(r.summary || '')} ${r.source === 'ai' ? U.badge('ذكاء اصطناعي', 'blue') : U.badge('محلي', 'gray')}</p>`;
         if (!Views._monViolations.length) {
@@ -768,10 +790,14 @@
       id: S.uid('nc'), title: v.title, severity: ['حرجة','عالية','متوسطة','منخفضة'].includes(v.severity) ? v.severity : 'متوسطة',
       source: 'تحليل بالذكاء الاصطناعي', status: 'مفتوحة', date: S.todayISO(), owner: App.user.name, dueDate: S.shift(3),
       action: (v.corrective || '') + (v.reference ? '\n[المرجع: ' + v.reference + ']' : ''),
-      preventiveAction: v.preventive || '', rootCause: '',
+      preventiveAction: v.preventive || '', rootCause: '', photo: Views._monThumb || '',
     });
-    U.toast('تم إنشاء حالة عدم مطابقة من المخالفة المرصودة', 'ok');
+    U.toast('تم إنشاء حالة عدم مطابقة مرفقة بالدليل المصوّر', 'ok');
     App.buildNav();
+  };
+
+  Views.zoomImg = function (src) {
+    U.modal('الدليل المصوّر', `<img src="${src}" style="max-width:100%;border-radius:10px" alt="دليل مصوّر"/>`, { wide: true });
   };
 
   /* ===================== المواصفات والمعايير ===================== */
