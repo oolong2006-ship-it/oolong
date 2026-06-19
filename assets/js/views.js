@@ -727,8 +727,11 @@
 
   Views.bind_monitor = function () {
     Views._monImg = null; Views._monThumb = null;
-    const fileEl = U.$('#mon-file'), analyzeBtn = U.$('#mon-analyze'), pick = U.$('#mon-pick');
+    const fileEl = U.$('#mon-file'), analyzeBtn = U.$('#mon-analyze'), pick = U.$('#mon-pick'), noteEl = U.$('#mon-note');
     if (!fileEl) return;
+    // يُفعَّل الزر عند وجود صورة أو ملاحظة نصية
+    const refreshBtn = () => { analyzeBtn.disabled = !(Views._monImg || (noteEl && noteEl.value.trim())); };
+    if (noteEl) noteEl.addEventListener('input', refreshBtn);
     if (pick) pick.onclick = () => fileEl.click();
     fileEl.onchange = () => {
       const file = fileEl.files[0]; if (!file) return;
@@ -740,7 +743,7 @@
         Views._monImg = { mediaType: m[1], data: m[2] };
         U.$('#mon-preview').innerHTML = `<img src="${reader.result}" style="max-width:100%;max-height:240px;border-radius:10px" alt="معاينة"/>`;
         Views._monThumb = await Views._downscale(reader.result, 480, 0.55); // دليل مصوّر مضغوط
-        analyzeBtn.disabled = false;
+        refreshBtn();
       };
       reader.readAsDataURL(file);
     };
