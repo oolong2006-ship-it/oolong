@@ -22,11 +22,27 @@
   }
 
   // ---------- النوافذ المنبثقة ----------
+  // إضافة عرض عربي مقروء أسفل حقول التاريخ الأصلية
+  function enhanceDateInputs(root) {
+    root.querySelectorAll('input[type=date]').forEach(inp => {
+      if (inp.dataset.arEnhanced) return;
+      inp.dataset.arEnhanced = '1';
+      const hint = document.createElement('div');
+      hint.className = 'date-ar muted';
+      const upd = () => { hint.textContent = inp.value ? '📅 ' + fmtDate(inp.value) : ''; };
+      upd();
+      inp.addEventListener('input', upd);
+      inp.addEventListener('change', upd);
+      inp.insertAdjacentElement('afterend', hint);
+    });
+  }
+
   function modal(title, bodyHTML, opts = {}) {
     $('#modal-title').textContent = title;
     $('#modal-body').innerHTML = bodyHTML;
     $('#modal').classList.toggle('wide', !!opts.wide);
     $('#modal-overlay').classList.remove('hidden');
+    enhanceDateInputs($('#modal-body'));
     if (typeof opts.onOpen === 'function') opts.onOpen($('#modal-body'));
     return $('#modal-body');
   }

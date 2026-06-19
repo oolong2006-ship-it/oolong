@@ -42,8 +42,23 @@
         U.$('#scrim').classList.toggle('show', open);
       };
       U.$('#scrim').onclick = () => this.closeSidebar();
-      U.$('#export-btn').onclick = () => this.exportData();
-      U.$('#import-btn').onclick = () => U.$('#import-file').click();
+      // الأيقونات الموحّدة (علامة، خروج، قائمة المزيد)
+      const I = window.ICONS;
+      U.$('#login-mark').innerHTML = I.shield;
+      U.$('#sidebar-mark').innerHTML = I.shield;
+      U.$('#kebab-btn').innerHTML = I.kebab;
+      U.$('#logout-btn').querySelector('.lo-ic').innerHTML = I.logout;
+      const kmIcons = U.$('#kebab-menu').querySelectorAll('.km-ic');
+      kmIcons[0].innerHTML = I.download; kmIcons[1].innerHTML = I.upload;
+
+      // قائمة "المزيد" المنسدلة
+      const kebabBtn = U.$('#kebab-btn'), kebabMenu = U.$('#kebab-menu');
+      kebabBtn.onclick = (e) => { e.stopPropagation(); kebabMenu.classList.toggle('hidden'); };
+      document.addEventListener('click', () => kebabMenu.classList.add('hidden'));
+      kebabMenu.onclick = (e) => e.stopPropagation();
+
+      U.$('#export-btn').onclick = () => { kebabMenu.classList.add('hidden'); this.exportData(); };
+      U.$('#import-btn').onclick = () => { kebabMenu.classList.add('hidden'); U.$('#import-file').click(); };
       U.$('#import-file').onchange = (e) => this.importData(e);
 
       // شريحة التاريخ
@@ -66,7 +81,7 @@
       U.$('#nav').innerHTML = ROUTES.map(r => {
         const c = counts[r.key];
         return `<button class="nav-item" data-key="${r.key}">
-          <span class="ic">${r.icon}</span><span>${r.label}</span>
+          <span class="ic">${(window.ICONS && window.ICONS[r.key]) || r.icon}</span><span>${r.label}</span>
           ${c ? `<span class="badge-count">${c}</span>` : ''}
         </button>`;
       }).join('');
