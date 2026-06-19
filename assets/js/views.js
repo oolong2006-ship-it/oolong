@@ -164,13 +164,16 @@
 
     U.modal('تنفيذ التدقيق: ' + insp.templateName, `
       <div id="insp-run">${body}</div>
-      <div class="form-actions" style="margin-top:18px">
+      <div class="modal-sticky-foot">
         <button class="btn-primary" id="save-insp">حفظ وإنهاء التدقيق</button>
-        <span id="live-score" class="muted" style="align-self:center"></span>
+        <span class="spacer" style="flex:1"></span>
+        <span id="live-score"></span>
       </div>`, { wide: true });
 
     const recompute = () => {
-      U.$('#live-score').textContent = 'النتيجة الحالية: ' + S.inspectionScore(insp) + '%';
+      const sc = S.inspectionScore(insp);
+      const col = sc >= 85 ? 'green' : sc >= 60 ? 'amber' : 'red';
+      U.$('#live-score').innerHTML = 'النتيجة: ' + U.badge(sc + '%', col);
     };
     recompute();
 
@@ -693,9 +696,9 @@
           <div id="mon-preview" style="margin-bottom:12px;text-align:center;min-height:160px;display:grid;place-items:center;background:#f8fafc;border-radius:12px;border:1.5px dashed var(--line)">
             <span class="muted">لم يتم اختيار صورة بعد</span>
           </div>
-          <div class="field" style="margin-bottom:10px">
-            <input type="file" id="mon-file" accept="image/*" capture="environment" />
-          </div>
+          <input type="file" id="mon-file" accept="image/*" capture="environment" hidden />
+          <button type="button" class="btn-secondary file-pick" id="mon-pick" style="margin-bottom:6px">📷 التقاط صورة أو اختيار ملف</button>
+          <div id="mon-fname" class="muted" style="font-size:12px;margin-bottom:12px;text-align:center"></div>
           <div class="field" style="margin-bottom:12px">
             <label>ملاحظة المفتش (اختياري)</label>
             <textarea id="mon-note" placeholder="مثال: بقايا طعام على سطح التحضير، أو باب الثلاجة مفتوح"></textarea>
@@ -724,10 +727,12 @@
 
   Views.bind_monitor = function () {
     Views._monImg = null; Views._monThumb = null;
-    const fileEl = U.$('#mon-file'), analyzeBtn = U.$('#mon-analyze');
+    const fileEl = U.$('#mon-file'), analyzeBtn = U.$('#mon-analyze'), pick = U.$('#mon-pick');
     if (!fileEl) return;
+    if (pick) pick.onclick = () => fileEl.click();
     fileEl.onchange = () => {
       const file = fileEl.files[0]; if (!file) return;
+      const fname = U.$('#mon-fname'); if (fname) fname.textContent = '📎 ' + file.name;
       const reader = new FileReader();
       reader.onload = async () => {
         const m = /^data:(.*?);base64,(.*)$/.exec(reader.result);

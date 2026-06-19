@@ -37,7 +37,11 @@
       });
 
       U.$('#logout-btn').onclick = () => { sessionStorage.removeItem('fs_user'); location.reload(); };
-      U.$('#menu-toggle').onclick = () => U.$('#sidebar').classList.toggle('open');
+      U.$('#menu-toggle').onclick = () => {
+        const open = U.$('#sidebar').classList.toggle('open');
+        U.$('#scrim').classList.toggle('show', open);
+      };
+      U.$('#scrim').onclick = () => this.closeSidebar();
       U.$('#export-btn').onclick = () => this.exportData();
       U.$('#import-btn').onclick = () => U.$('#import-file').click();
       U.$('#import-file').onchange = (e) => this.importData(e);
@@ -67,8 +71,13 @@
         </button>`;
       }).join('');
       U.$('#nav').querySelectorAll('.nav-item').forEach(el => {
-        el.onclick = () => { this.go(el.dataset.key); U.$('#sidebar').classList.remove('open'); };
+        el.onclick = () => { this.go(el.dataset.key); this.closeSidebar(); };
       });
+    },
+
+    closeSidebar() {
+      U.$('#sidebar').classList.remove('open');
+      U.$('#scrim').classList.remove('show');
     },
 
     go(key) {

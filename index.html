@@ -33,6 +33,7 @@
 
   <!-- التطبيق -->
   <div id="app" class="app hidden">
+    <div class="scrim" id="scrim"></div>
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-brand">
         <span class="brand-mark">🛡️</span>
@@ -54,8 +55,8 @@
         <div class="topbar-title" id="page-title">لوحة المعلومات</div>
         <div class="topbar-actions">
           <span class="today-chip" id="today-chip"></span>
-          <button class="btn-secondary" id="export-btn" title="تصدير نسخة احتياطية">⬇ تصدير</button>
-          <button class="btn-secondary" id="import-btn" title="استيراد نسخة احتياطية">⬆ استيراد</button>
+          <button class="btn-secondary" id="export-btn" title="تصدير نسخة احتياطية">⬇ <span class="lbl">تصدير</span></button>
+          <button class="btn-secondary" id="import-btn" title="استيراد نسخة احتياطية">⬆ <span class="lbl">استيراد</span></button>
           <input type="file" id="import-file" accept="application/json" hidden />
         </div>
       </header>

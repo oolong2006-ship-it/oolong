@@ -274,19 +274,50 @@ tbody tr:hover { background: #f8fafc; }
 .bar-row .bar-track { flex: 1; height: 22px; background: var(--bg); border-radius: 8px; overflow: hidden; }
 .bar-row .bar-fill { height: 100%; border-radius: 8px; display: flex; align-items: center; justify-content: flex-end; padding-inline-end: 8px; color: #fff; font-size: 12px; font-weight: 700; min-width: 28px; }
 
+/* ===== States & accessibility ===== */
+button:disabled, .btn-primary:disabled, .btn-secondary:disabled { opacity: .45; cursor: not-allowed; }
+:focus-visible { outline: 2.5px solid var(--teal); outline-offset: 2px; border-radius: 6px; }
+.role-btn:focus-visible, .nav-item:focus-visible { outline-offset: -2px; }
+
+/* KPI value reflects severity for faster scanning */
+.kpi.bad .kpi-value { color: var(--red); }
+.kpi.warn .kpi-value { color: var(--amber); }
+.kpi.good .kpi-value { color: var(--green); }
+
+/* Sidebar scrim (mobile) */
+.scrim { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 55; opacity: 0; pointer-events: none; transition: opacity .25s; }
+.scrim.show { opacity: 1; pointer-events: auto; }
+
+/* File picker (styled, replaces native input text) */
+.file-pick { width: 100%; }
+
+/* Sticky footer inside the inspection-run modal */
+.modal-sticky-foot {
+  position: sticky; bottom: 0; background: var(--surface);
+  border-top: 1px solid var(--line); margin: 18px -20px -20px; padding: 14px 20px;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 1024px) { .cols-4 { grid-template-columns: repeat(2, 1fr); } .cols-3 { grid-template-columns: repeat(2,1fr);} }
 @media (max-width: 760px) {
   .sidebar { position: fixed; right: 0; z-index: 60; transform: translateX(100%); transition: .25s; box-shadow: -10px 0 40px rgba(0,0,0,.3); }
   .sidebar.open { transform: translateX(0); }
   #menu-toggle { display: block; }
-  .cols-4, .cols-3, .cols-2, .form-grid.two { grid-template-columns: 1fr; }
+  .cols-3, .cols-2, .form-grid.two { grid-template-columns: 1fr; }
+  /* مؤشرات أكثر إحكامًا: بطاقتان بالصف بدل بطاقة طويلة */
+  .cols-4 { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .kpi { padding: 14px; }
+  .kpi .kpi-value { font-size: 23px; }
+  .kpi .kpi-ic { width: 38px; height: 38px; font-size: 21px; top: 12px; left: 12px; }
+  .kpi .kpi-sub { display: none; }
   .content { padding: 16px; }
-  .topbar-actions .btn-secondary span { display: none; }
+  .topbar-actions .btn-secondary .lbl { display: none; }
+  .topbar-actions .btn-secondary { padding: 8px 11px; }
   .today-chip { display: none; }
 }
 @media print {
-  .sidebar, .topbar, .page-head .btn-primary, .t-actions { display: none !important; }
+  .sidebar, .topbar, .page-head .btn-primary, .t-actions, .scrim { display: none !important; }
   .content { padding: 0; }
   .card { box-shadow: none; break-inside: avoid; }
 }
