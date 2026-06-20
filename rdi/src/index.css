@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Tajawal', system-ui, sans-serif;
+  background-color: #f7f4ed;
+  color: #131a2b;
+}
+
+/* الأرقام بخط أحادي المسافة لمظهر مالي احترافي */
+.num {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  unicode-bidi: embed;
+}
+
+/* أنماط الطباعة / PDF: نُخفي عناصر التحكم ونُظهر التقرير فقط */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+  .print-area {
+    box-shadow: none !important;
+  }
+  @page {
+    margin: 1.5cm;
+  }
+}
