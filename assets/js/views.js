@@ -907,6 +907,83 @@
       </div>`;
   };
 
+  /* ===================== الفريق والأدوار ===================== */
+  Views._roleLbl = function (r) { return { owner: 'مالك', manager: 'مدير', inspector: 'مفتش' }[r] || r; };
+
+  Views.team = function () {
+    const cloud = window.Cloud && window.Cloud.active && window.Cloud.active();
+    if (!cloud) {
+      return `<div class="page-head"><div><h2>إدارة الفريق والأدوار</h2><p>دعوة الأعضاء وتحديد صلاحياتهم</p></div></div>
+        <div class="card" style="background:#eff6ff;border-color:#bfdbfe">
+          <strong>ℹ️ إدارة الفريق متاحة في النسخة السحابية (SaaS)</strong>
+          <p class="muted" style="margin-top:6px">عند تفعيل الوضع السحابي، يمكنك دعوة أعضاء فريقك بأدوار مختلفة (مالك / مدير / مفتش) ضمن منشأتك.</p>
+          <div class="list-tight" style="margin-top:12px">
+            <div class="row-line"><strong>مالك</strong><span class="spacer"></span><span class="muted">صلاحيات كاملة + الفوترة + إدارة الفريق</span></div>
+            <div class="row-line"><strong>مدير</strong><span class="spacer"></span><span class="muted">إدارة العمليات ودعوة المفتشين</span></div>
+            <div class="row-line"><strong>مفتش</strong><span class="spacer"></span><span class="muted">تنفيذ التفتيش والتسجيل والرصد</span></div>
+          </div>
+        </div>`;
+    }
+    const canManage = window.Cloud.canManageTeam();
+    return `
+      <div class="page-head"><div><h2>إدارة الفريق والأدوار</h2><p>دعوة الأعضاء وتحديد صلاحياتهم داخل المنشأة</p></div></div>
+      ${canManage ? `<div class="card" style="margin-bottom:18px">
+        <div class="card-title">➕ دعوة عضو</div>
+        <div class="form-grid two">
+          <div class="field"><label>البريد الإلكتروني</label><input id="inv-email" type="email" placeholder="member@example.com" /></div>
+          <div class="field"><label>الدور</label><select id="inv-role"><option value="inspector">مفتش</option><option value="manager">مدير</option></select></div>
+        </div>
+        <div class="form-actions" style="margin-top:12px"><button class="btn-primary" id="inv-send">إرسال الدعوة</button><span id="inv-msg" class="muted" style="align-self:center"></span></div>
+        <p class="muted" style="font-size:12px;margin-top:8px">ينضم العضو تلقائيًا عند تسجيله/دخوله بنفس البريد.</p>
+      </div>` : ''}
+      <div class="card" style="margin-bottom:18px">
+        <div class="card-title">👥 الأعضاء</div>
+        <div id="team-members">${U.empty('جارٍ التحميل...', '👥')}</div>
+      </div>
+      <div class="card">
+        <div class="card-title">✉️ الدعوات</div>
+        <div id="team-invites">${U.empty('جارٍ التحميل...', '✉️')}</div>
+      </div>`;
+  };
+
+  Views.bind_team = async function () {
+    const cloud = window.Cloud && window.Cloud.active && window.Cloud.active();
+    if (!cloud) return;
+    const C = window.Cloud;
+    const sendBtn = U.$('#inv-send');
+    if (sendBtn) sendBtn.onclick = async () => {
+      const email = U.$('#inv-email').value.trim(), role = U.$('#inv-role').value;
+      const msg = U.$('#inv-msg');
+      if (!email) { msg.textContent = '⚠ أدخل البريد'; return; }
+      sendBtn.disabled = true; msg.textContent = '⏳ جارٍ الإرسال...';
+      try { await C.invite(email, role); msg.textContent = '✓ تم إرسال الدعوة'; U.$('#inv-email').value = ''; Views.bind_team(); }
+      catch (e) { msg.textContent = '⚠ ' + (e.message || 'تعذّر'); }
+      sendBtn.disabled = false;
+    };
+    try {
+      const members = await C.listMembers();
+      const me = (C.org() || {});
+      U.$('#team-members').innerHTML = members.length ? `<div class="list-tight">${members.map(m => `
+        <div class="row-line">
+          <div style="flex:1"><strong>${esc(m.email || m.user_id)}</strong></div>
+          ${U.badge(Views._roleLbl(m.role), m.role === 'owner' ? 'blue' : m.role === 'manager' ? 'green' : 'gray')}
+          ${(C.canManageTeam() && m.role !== 'owner') ? `<button class="btn-danger btn-sm" onclick="Views.removeMember('${m.user_id}')">إزالة</button>` : ''}
+        </div>`).join('')}</div>` : U.empty('لا أعضاء بعد');
+    } catch (e) { U.$('#team-members').innerHTML = `<div class="empty">⚠ ${esc(e.message)}</div>`; }
+    try {
+      const invites = await C.listInvitations();
+      U.$('#team-invites').innerHTML = invites.length ? `<div class="list-tight">${invites.map(i => `
+        <div class="row-line"><div style="flex:1">${esc(i.email)}</div>${U.badge(Views._roleLbl(i.role), 'gray')}${U.statusBadge(i.status === 'pending' ? 'قيد المعالجة' : i.status === 'accepted' ? 'مكتمل' : 'منخفضة')}</div>`).join('')}</div>` : U.empty('لا دعوات', '✉️');
+    } catch (e) { U.$('#team-invites').innerHTML = `<div class="empty">⚠ ${esc(e.message)}</div>`; }
+  };
+
+  Views.removeMember = function (userId) {
+    U.confirmDialog('إزالة هذا العضو من المنشأة؟', async () => {
+      try { await window.Cloud.removeMember(userId); U.toast('تمت الإزالة', 'ok'); Views.bind_team(); }
+      catch (e) { U.toast(e.message || 'تعذّر', 'err'); }
+    }, 'إزالة');
+  };
+
   /* ===================== الاشتراك والخطة ===================== */
   Views.billing = function () {
     const cloud = window.Cloud && window.Cloud.active && window.Cloud.active();
@@ -951,14 +1028,17 @@
       <p class="muted" style="margin-top:16px;font-size:13px">💳 الدفع الإلكتروني (مدى/بطاقات) قيد التفعيل — حاليًا يتم تفعيل الخطة يدويًا من قِبل فريقنا.</p>`;
   };
 
-  Views.choosePlan = function (key) {
-    if (window.Cloud && window.Cloud.active()) {
-      U.confirmDialog('سيتواصل معك فريقنا لتفعيل الخطة المختارة (الدفع الإلكتروني قيد التفعيل). متابعة؟', () => {
-        U.toast('تم تسجيل طلب الترقية — سنتواصل معك قريبًا', 'ok');
-      }, 'تأكيد الطلب');
-    } else {
-      U.toast('إدارة الاشتراك متاحة في النسخة السحابية', '');
+  Views.choosePlan = async function (key) {
+    if (!(window.Cloud && window.Cloud.active())) { U.toast('إدارة الاشتراك متاحة في النسخة السحابية', ''); return; }
+    if (key === 'enterprise') {
+      U.confirmDialog('سيتواصل معك فريقنا لتجهيز الخطة المؤسسية. متابعة؟', () => U.toast('تم تسجيل طلبك — سنتواصل معك قريبًا', 'ok'), 'تأكيد الطلب');
+      return;
     }
+    // دفع عبر Moyasar
+    U.confirmDialog('سيتم تحويلك لإتمام الدفع الآمن عبر Moyasar. متابعة؟', async () => {
+      try { await window.Cloud.checkout(key); }
+      catch (e) { U.toast(e.message || 'تعذّر بدء الدفع', 'err'); }
+    }, 'متابعة الدفع');
   };
 
   /* ===================== الإعدادات ===================== */

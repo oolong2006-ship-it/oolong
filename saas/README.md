@@ -52,7 +52,32 @@ window.SAAS = {
 ## النشر
 استضِف الملفات الثابتة على أي مزوّد (Netlify/Vercel/Cloudflare Pages/خادمك) واربط دومينك. لا حاجة لخادم خاص — Supabase يتولّى البيانات والمصادقة.
 
+## المرحلة الثانية: الفريق والأدوار + الدفع
+
+### أ) الفريق والأدوار
+1. شغّل [`02_team_and_billing.sql`](./02_team_and_billing.sql) في **SQL Editor** (بعد `schema.sql`).
+2. يضيف: ملفات التعريف، الدعوات، الأدوار (مالك/مدير/مفتش)، ودوال الدعوة والقبول والإزالة.
+3. داخل التطبيق → صفحة **الفريق والأدوار**: المالك/المدير يدعو أعضاء بالبريد ويحدد الدور؛ ينضم العضو تلقائيًا عند تسجيله بنفس البريد.
+
+### ب) الدفع (Moyasar)
+1. أنشئ حساب <https://moyasar.com> واحصل على **Secret Key**.
+2. انشر دالتي الحافة:
+   ```bash
+   supabase functions deploy create-checkout
+   supabase functions deploy moyasar-webhook --no-verify-jwt
+   ```
+3. اضبط الأسرار:
+   ```bash
+   supabase secrets set MOYASAR_SECRET_KEY=sk_... APP_URL=https://your-app-url \
+     MOYASAR_WEBHOOK_SECRET=your-random-secret SUPABASE_SERVICE_ROLE_KEY=service_role_key
+   ```
+4. في لوحة Moyasar → **Webhooks**: أضِف رابط `moyasar-webhook` لحدث `payment_paid`، مع ترويسة `x-webhook-secret`.
+5. داخل التطبيق → صفحة **الاشتراك** → «اختر الخطة» → يُحوَّل العميل لصفحة دفع Moyasar الآمنة، وعند نجاح الدفع تُفعَّل خطته تلقائيًا عبر الـ Webhook.
+
+> الأسعار في `saas/functions/create-checkout/index.ts` (بالهللة). عدّلها حسب باقاتك.
+
 ## ملاحظات
 - مفتاح **anon** عام بطبيعته وآمن للواجهة؛ الحماية الفعلية عبر RLS.
+- مفتاح **service_role** يُستخدم فقط داخل دالة الحافة (الخادم) ولا يُكشف للعميل أبدًا.
 - مفتاح Claude API للذكاء الاصطناعي يُدار كما هو (لكل منشأة، أو عبر وكيل خلفي لاحقًا).
 - وضع العرض المحلي يبقى متاحًا (config فارغ) للتجارب والعروض دون إنترنت.

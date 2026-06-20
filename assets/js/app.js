@@ -15,6 +15,7 @@
     { key: 'cleaning', icon: '🧹', label: 'التنظيف والآفات', title: 'التنظيف ومكافحة الآفات' },
     { key: 'standards', icon: '📚', label: 'المواصفات والمعايير', title: 'المواصفات والمعايير المرجعية' },
     { key: 'reports', icon: '📈', label: 'التقارير والجاهزية', title: 'التقارير وجاهزية التفتيش' },
+    { key: 'team', icon: '👤', label: 'الفريق والأدوار', title: 'إدارة الفريق والأدوار' },
     { key: 'billing', icon: '💳', label: 'الاشتراك', title: 'الاشتراك والخطة' },
     { key: 'settings', icon: '⚙️', label: 'الإعدادات', title: 'الإعدادات' },
   ];
@@ -92,8 +93,8 @@
       let sub = 'جلسة محلية';
       if (this.cloud && window.Cloud && Cloud.active()) {
         const days = Cloud.trialDaysLeft();
-        const planLbl = Cloud.planLimits().label;
-        sub = 'خطة: ' + planLbl + (Cloud.planKey() === 'trial' && days != null ? ` · تبقّى ${days} يوم` : '');
+        const roleLbl = (window.Views && Views._roleLbl) ? Views._roleLbl(Cloud.role()) : Cloud.role();
+        sub = roleLbl + ' · ' + Cloud.planLimits().label + (Cloud.planKey() === 'trial' && days != null ? ` · ${days} يوم` : '');
       }
       U.$('#user-badge').innerHTML = `<strong>${U.esc(this.user.name)}</strong><small>${U.esc(sub)}</small>`;
       this.buildNav();

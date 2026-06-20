@@ -25,6 +25,7 @@
 
   let client = null;
   let _org = null;   // صف المنشأة الحالي
+  let _role = null;  // دور المستخدم في منشأته
   let _active = false;
 
   function cfg() { return window.SAAS || {}; }
@@ -74,6 +75,9 @@
     const { data: u } = await client.auth.getUser();
     if (!u || !u.user) throw new Error('غير مسجّل الدخول');
 
+    // قبول أي دعوات معلّقة لبريد المستخدم (انضمام لفريق منشأة قائمة)
+    try { await client.rpc('accept_pending_invitations'); } catch (e) { /* لا بأس */ }
+
     // إيجاد منشأة المستخدم (RLS يُرجِع منشآته فقط)
     let { data: orgs, error } = await client.from('organizations').select('*').limit(1);
     if (error) throw error;
@@ -88,6 +92,12 @@
     } else {
       _org = orgs[0];
     }
+
+    // دور المستخدم الحالي في منشأته
+    try {
+      const { data: mem } = await client.from('memberships').select('role').eq('user_id', u.user.id).eq('org_id', _org.id).single();
+      _role = mem ? mem.role : 'owner';
+    } catch (e) { _role = 'owner'; }
 
     // بناء كائن البيانات بنفس شكل التطبيق
     const db = {
@@ -137,6 +147,44 @@
     } catch (e) {
       if (window.UI) window.UI.toast('تعذّر حفظ بيانات المنشأة سحابيًا', 'err');
     }
+  }
+
+  // ---------- الفريق والأدوار ----------
+  function role() { return _role || 'inspector'; }
+  function canManageTeam() { return _role === 'owner' || _role === 'manager'; }
+
+  async function listMembers() {
+    if (!_active) return [];
+    const { data, error } = await client.from('memberships')
+      .select('user_id,email,role').eq('org_id', _org.id);
+    if (error) throw error;
+    return data || [];
+  }
+  async function invite(email, r) {
+    if (!_active) return;
+    const { data, error } = await client.rpc('create_invitation', { p_email: email, p_role: r || 'inspector', p_org: _org.id });
+    if (error) throw error;
+    return data;
+  }
+  async function listInvitations() {
+    if (!_active) return [];
+    const { data, error } = await client.from('invitations').select('email,role,status,created_at').eq('org_id', _org.id).order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  }
+  async function removeMember(userId) {
+    if (!_active) return;
+    const { error } = await client.rpc('remove_member', { p_user: userId, p_org: _org.id });
+    if (error) throw error;
+  }
+
+  // ---------- الدفع (Moyasar عبر Edge Function) ----------
+  async function checkout(plan) {
+    if (!_active) throw new Error('غير متاح');
+    const { data, error } = await client.functions.invoke('create-checkout', { body: { plan } });
+    if (error) throw new Error('تعذّر بدء الدفع (تأكد من نشر دالة create-checkout)');
+    if (data && data.url) { window.location.href = data.url; return; }
+    throw new Error((data && data.error) || 'تعذّر إنشاء فاتورة الدفع');
   }
 
   // ---------- الخطط ----------
@@ -198,6 +246,7 @@
   window.Cloud = {
     enabled, configured, active, init, org,
     signUp, signIn, signOut, currentSession, bootstrap, mountAuth,
+    role, canManageTeam, listMembers, invite, listInvitations, removeMember, checkout,
     planKey, planLimits, feature, trialDaysLeft, PLAN_LIMITS,
   };
 })();
