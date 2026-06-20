@@ -156,8 +156,17 @@
 
   // ---------- قراءة/كتابة ----------
   let db = null;
+  let _cloud = false;            // وضع سحابي (SaaS)
+  let _hooks = {};               // { onMutate(collection,op,row), onMeta(meta) }
+
+  // حقن بيانات المنشأة (يستدعيه cloud.js بعد تسجيل الدخول)
+  function hydrate(obj) { db = obj; _cloud = true; }
+  function setHooks(h) { _hooks = h || {}; }
+  function isCloud() { return _cloud; }
+
   function load() {
     if (db) return db;
+    if (_cloud) return db; // البيانات تُحقن من السحابة
     try {
       const raw = localStorage.getItem(KEY);
       db = raw ? JSON.parse(raw) : seed();
@@ -166,18 +175,30 @@
     return db;
   }
   function save() {
+    if (_cloud) { if (_hooks.onMeta) _hooks.onMeta(db.meta); return; } // المنشأة تُزامَن سحابيًا
     try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { /* ممتلئ */ }
   }
-  function reset() { db = seed(); save(); }
+  function reset() { if (_cloud) return; db = seed(); save(); }
 
   // ---------- العمليات ----------
   function col(name) { load(); if (!db[name]) db[name] = []; return db[name]; }
-  function add(name, obj) { obj.id = obj.id || uid(name); col(name).unshift(obj); save(); return obj; }
+  function add(name, obj) {
+    obj.id = obj.id || uid(name); col(name).unshift(obj);
+    if (_cloud && _hooks.onMutate) _hooks.onMutate(name, 'upsert', obj); else save();
+    return obj;
+  }
   function update(name, id, patch) {
     const arr = col(name); const i = arr.findIndex(x => x.id === id);
-    if (i > -1) { arr[i] = { ...arr[i], ...patch }; save(); return arr[i]; }
+    if (i > -1) {
+      arr[i] = { ...arr[i], ...patch };
+      if (_cloud && _hooks.onMutate) _hooks.onMutate(name, 'upsert', arr[i]); else save();
+      return arr[i];
+    }
   }
-  function remove(name, id) { const arr = col(name); const i = arr.findIndex(x => x.id === id); if (i > -1) { arr.splice(i, 1); save(); } }
+  function remove(name, id) {
+    const arr = col(name); const i = arr.findIndex(x => x.id === id);
+    if (i > -1) { arr.splice(i, 1); if (_cloud && _hooks.onMutate) _hooks.onMutate(name, 'delete', { id }); else save(); }
+  }
   function get(name, id) { return col(name).find(x => x.id === id); }
 
   // ---------- مؤشرات محسوبة ----------
@@ -235,5 +256,6 @@
     inspectionScore, exportJSON, importJSON,
     daysFromToday, todayISO, shift, uid,
     CHECKLIST_TEMPLATES, buildInspection,
+    hydrate, setHooks, isCloud,
   };
 })();

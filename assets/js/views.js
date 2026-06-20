@@ -907,6 +907,60 @@
       </div>`;
   };
 
+  /* ===================== الاشتراك والخطة ===================== */
+  Views.billing = function () {
+    const cloud = window.Cloud && window.Cloud.active && window.Cloud.active();
+    const plans = [
+      { key: 'basic', name: 'الأساسية', price: '١٩٩', for: 'مطعم أو كافيه واحد', feats: ['التفتيش و GMP', 'مراقبة الحرارة', 'الشهادات الصحية', 'التقارير'] },
+      { key: 'pro', name: 'الاحترافية', price: '٣٩٩', for: 'المطاعم والكافيهات النشطة', feats: ['كل الأساسية', 'الرصد بالتصوير الذكي (AI)', 'الإجراءات التصحيحية والوقائية', 'الموردون والتنظيف'], featured: true },
+      { key: 'enterprise', name: 'المؤسسية', price: 'تواصل', for: 'السلاسل والمصانع', feats: ['فروع متعددة', 'صلاحيات متقدمة', 'تكامل ودعم مخصص', 'تدريب الفريق'] },
+    ];
+    let head = '';
+    if (cloud) {
+      const C = window.Cloud, days = C.trialDaysLeft(), key = C.planKey(), status = (C.org() || {}).subscription_status;
+      head = `<div class="card" style="margin-bottom:18px">
+        <div class="inline-stat">
+          <div><strong>${esc(C.planLimits().label)}</strong><span>خطتك الحالية</span></div>
+          <div><strong>${esc(status || '—')}</strong><span>حالة الاشتراك</span></div>
+          ${key === 'trial' && days != null ? `<div><strong>${days} يوم</strong><span>متبقٍ من التجربة</span></div>` : ''}
+          <div><strong>${C.planLimits().ai ? 'مُفعّل' : 'غير متاح'}</strong><span>الذكاء الاصطناعي</span></div>
+        </div>
+      </div>`;
+    } else {
+      head = `<div class="card" style="margin-bottom:18px;background:#eff6ff;border-color:#bfdbfe">
+        <strong>ℹ️ إدارة الاشتراكات متاحة في النسخة السحابية (SaaS)</strong>
+        <p class="muted" style="margin-top:6px">أنت الآن في وضع العرض المحلي. عند تفعيل الوضع السحابي (Supabase) تُدار الحسابات والخطط والاشتراكات لكل منشأة. الخطط أدناه للعرض.</p>
+      </div>`;
+    }
+    const curKey = cloud ? window.Cloud.planKey() : null;
+    return `
+      <div class="page-head"><div><h2>الاشتراك والخطة</h2><p>اختر الخطة المناسبة لمنشأتك — يمكن الترقية في أي وقت</p></div></div>
+      ${head}
+      <div class="grid cols-3">
+        ${plans.map(p => `
+          <div class="card" style="${p.featured ? 'border-color:var(--teal);box-shadow:0 12px 36px rgba(15,118,110,.15)' : ''};position:relative">
+            ${p.featured ? '<span class="badge green" style="position:absolute;top:-10px;inset-inline-start:18px">الأكثر شيوعًا</span>' : ''}
+            ${curKey === p.key ? '<span class="badge blue" style="position:absolute;top:-10px;inset-inline-end:18px">خطتك الحالية</span>' : ''}
+            <h3 style="font-size:19px">${esc(p.name)}</h3>
+            <div style="font-size:30px;font-weight:800;color:var(--teal-dark);margin:8px 0 2px">${esc(p.price)}<span style="font-size:14px;font-weight:600;color:var(--muted)">${p.price === 'تواصل' ? '' : ' ر.س/شهر'}</span></div>
+            <p class="muted" style="font-size:13px;margin-bottom:14px">${esc(p.for)}</p>
+            <ul style="list-style:none;display:grid;gap:9px;margin-bottom:16px">${p.feats.map(f => `<li style="position:relative;padding-inline-start:24px"><span style="position:absolute;inset-inline-start:0;color:var(--teal);font-weight:800">✓</span>${esc(f)}</li>`).join('')}</ul>
+            <button class="${p.featured ? 'btn-primary' : 'btn-secondary'}" style="width:100%" onclick="Views.choosePlan('${p.key}')">${curKey === p.key ? 'خطتك الحالية' : (p.price === 'تواصل' ? 'اطلب عرضًا' : 'اختر الخطة')}</button>
+          </div>`).join('')}
+      </div>
+      <p class="muted" style="margin-top:16px;font-size:13px">💳 الدفع الإلكتروني (مدى/بطاقات) قيد التفعيل — حاليًا يتم تفعيل الخطة يدويًا من قِبل فريقنا.</p>`;
+  };
+
+  Views.choosePlan = function (key) {
+    if (window.Cloud && window.Cloud.active()) {
+      U.confirmDialog('سيتواصل معك فريقنا لتفعيل الخطة المختارة (الدفع الإلكتروني قيد التفعيل). متابعة؟', () => {
+        U.toast('تم تسجيل طلب الترقية — سنتواصل معك قريبًا', 'ok');
+      }, 'تأكيد الطلب');
+    } else {
+      U.toast('إدارة الاشتراك متاحة في النسخة السحابية', '');
+    }
+  };
+
   /* ===================== الإعدادات ===================== */
   Views.settings = function () {
     const db = S.load();

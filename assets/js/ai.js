@@ -19,7 +19,11 @@
     return c;
   }
   function hasKey() { return !!(cfg().apiKey && cfg().apiKey.trim()); }
-  function enabled() { return hasKey() && cfg().enabled !== false; }
+  function enabled() {
+    // في الوضع السحابي: يُشترط أن تتيح الخطة ميزة الذكاء الاصطناعي
+    if (window.Cloud && window.Cloud.active && window.Cloud.active() && !window.Cloud.feature('ai')) return false;
+    return hasKey() && cfg().enabled !== false;
+  }
 
   // النظام (System prompt) — يحقن المعرفة بالمواصفات
   function systemPrompt() {

@@ -15,6 +15,7 @@
     { key: 'cleaning', icon: '🧹', label: 'التنظيف والآفات', title: 'التنظيف ومكافحة الآفات' },
     { key: 'standards', icon: '📚', label: 'المواصفات والمعايير', title: 'المواصفات والمعايير المرجعية' },
     { key: 'reports', icon: '📈', label: 'التقارير والجاهزية', title: 'التقارير وجاهزية التفتيش' },
+    { key: 'billing', icon: '💳', label: 'الاشتراك', title: 'الاشتراك والخطة' },
     { key: 'settings', icon: '⚙️', label: 'الإعدادات', title: 'الإعدادات' },
   ];
 
@@ -23,20 +24,39 @@
     current: 'dashboard',
 
     init() {
-      // استعادة الجلسة
-      const saved = sessionStorage.getItem('fs_user');
-      if (saved) { this.user = JSON.parse(saved); this.enter(); }
+      this.cloud = !!(window.Cloud && window.Cloud.enabled());
 
-      // أزرار الدخول
-      document.querySelectorAll('.role-btn').forEach(btn => {
-        btn.onclick = () => {
-          this.user = { name: btn.dataset.role, role: btn.dataset.role };
-          sessionStorage.setItem('fs_user', JSON.stringify(this.user));
-          this.enter();
-        };
-      });
+      if (this.cloud) {
+        // وضع SaaS سحابي: مصادقة حقيقية بدل أدوار العرض
+        const roles = document.querySelector('.login-roles');
+        if (roles) Cloud.mountAuth(roles, (user) => {
+          this.user = user; sessionStorage.setItem('fs_user', JSON.stringify(user)); this.enter();
+        });
+        // استعادة جلسة سحابية قائمة
+        Cloud.currentSession().then(async (session) => {
+          if (session) {
+            try { await Cloud.bootstrap({}); this.user = { name: session.user.email }; this.enter(); }
+            catch (e) { /* يبقى في شاشة الدخول */ }
+          }
+        });
+      } else {
+        // وضع العرض المحلي: استعادة جلسة + أزرار الأدوار
+        const saved = sessionStorage.getItem('fs_user');
+        if (saved) { this.user = JSON.parse(saved); this.enter(); }
+        document.querySelectorAll('.role-btn').forEach(btn => {
+          btn.onclick = () => {
+            this.user = { name: btn.dataset.role, role: btn.dataset.role };
+            sessionStorage.setItem('fs_user', JSON.stringify(this.user));
+            this.enter();
+          };
+        });
+      }
 
-      U.$('#logout-btn').onclick = () => { sessionStorage.removeItem('fs_user'); location.reload(); };
+      U.$('#logout-btn').onclick = async () => {
+        sessionStorage.removeItem('fs_user');
+        if (this.cloud && window.Cloud) { try { await Cloud.signOut(); } catch (e) {} }
+        location.reload();
+      };
       U.$('#menu-toggle').onclick = () => {
         const open = U.$('#sidebar').classList.toggle('open');
         U.$('#scrim').classList.toggle('show', open);
@@ -69,7 +89,13 @@
       U.$('#login-screen').classList.add('hidden');
       U.$('#app').classList.remove('hidden');
       // بطاقة المستخدم
-      U.$('#user-badge').innerHTML = `<strong>${U.esc(this.user.name)}</strong><small>جلسة محلية</small>`;
+      let sub = 'جلسة محلية';
+      if (this.cloud && window.Cloud && Cloud.active()) {
+        const days = Cloud.trialDaysLeft();
+        const planLbl = Cloud.planLimits().label;
+        sub = 'خطة: ' + planLbl + (Cloud.planKey() === 'trial' && days != null ? ` · تبقّى ${days} يوم` : '');
+      }
+      U.$('#user-badge').innerHTML = `<strong>${U.esc(this.user.name)}</strong><small>${U.esc(sub)}</small>`;
       this.buildNav();
       S.load();
       this.go('dashboard');
