@@ -808,6 +808,147 @@
     U.modal('الدليل المصوّر', `<img src="${src}" style="max-width:100%;border-radius:10px" alt="دليل مصوّر"/>`, { wide: true });
   };
 
+  /* ===================== فحص العامل بالتصوير (ذكاء اصطناعي) ===================== */
+  Views._wcImg = null; Views._wcThumb = null; Views._wcResult = null; Views._wcEmp = '';
+
+  Views.workercheck = function () {
+    const db = S.load();
+    const aiOn = window.AI.enabled();
+    const history = (db.hygieneChecks || []).slice(0, 8);
+    const emps = db.employees.map(e => `<option value="${esc(e.name)}">${esc(e.name)} — ${esc(e.role)}</option>`).join('');
+    return `
+      <div class="page-head">
+        <div><h2>فحص نظافة العامل بالذكاء الاصطناعي</h2><p>صوّر العامل ليقيّم النظام التزامه باشتراطات النظافة الصحية لمتداولي الغذاء</p></div>
+      </div>
+      ${aiOn ? '' : `<div class="card" style="margin-bottom:16px;background:#fffbeb;border-color:#fde68a">
+        <strong>⚠ خدمة الذكاء الاصطناعي غير مفعّلة</strong>
+        <p class="muted" style="margin-top:6px">التفتيش البصري للعامل يتطلب تفعيل الخدمة من <a href="#" onclick="App.go('settings');return false">الإعدادات</a>.</p></div>`}
+      <div class="grid cols-2">
+        <div class="card">
+          <div class="card-title">📷 صورة العامل</div>
+          <div class="field" style="margin-bottom:10px">
+            <label>العامل (اختياري)</label>
+            <select id="wc-emp"><option value="">— غير محدد —</option>${emps}</select>
+          </div>
+          <div id="wc-preview" style="margin-bottom:12px;text-align:center;min-height:150px;display:grid;place-items:center;background:#f8fafc;border-radius:12px;border:1.5px dashed var(--line)">
+            <span class="muted">لم يتم اختيار صورة بعد</span>
+          </div>
+          <input type="file" id="wc-file" accept="image/*" capture="environment" hidden />
+          <button type="button" class="btn-secondary file-pick" id="wc-pick" style="margin-bottom:6px">📷 التقاط صورة العامل أو اختيار ملف</button>
+          <div id="wc-fname" class="muted" style="font-size:12px;margin-bottom:10px;text-align:center"></div>
+          <div class="field" style="margin-bottom:12px"><label>ملاحظة (اختياري)</label><textarea id="wc-note" placeholder="مثال: أثناء مناولة الطعام الجاهز"></textarea></div>
+          <button class="btn-primary" id="wc-analyze" disabled>🔍 تفتيش العامل وتقييم الالتزام</button>
+          <span id="wc-state" class="muted" style="margin-inline-start:10px"></span>
+        </div>
+        <div class="card">
+          <div class="card-title">📋 نتيجة التفتيش</div>
+          <div id="wc-results">${U.empty('ستظهر نتيجة تقييم الالتزام هنا بعد التحليل', '🧑‍🔬')}</div>
+        </div>
+      </div>
+      ${history.length ? `<div class="card section-gap">
+        <div class="card-title">🕘 سجل فحوصات العاملين</div>
+        <div class="table-wrap" style="border:none"><table>
+          <thead><tr><th>الصورة</th><th>العامل</th><th>التاريخ</th><th>النتيجة</th><th>الالتزام</th></tr></thead>
+          <tbody>${history.map(h => `<tr>
+            <td>${h.thumb ? `<img src="${h.thumb}" onclick="Views.zoomImg('${h.thumb}')" style="width:48px;height:48px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--line)" alt="دليل"/>` : '—'}</td>
+            <td><strong>${esc(h.employee || '—')}</strong></td>
+            <td>${fmtDate(h.date)} <small class="muted">${esc(h.time || '')}</small></td>
+            <td>${U.statusBadge(h.result || '—')}</td>
+            <td><strong>${h.score}%</strong></td>
+          </tr>`).join('')}</tbody></table></div>
+      </div>` : ''}`;
+  };
+
+  Views.bind_workercheck = function () {
+    Views._wcImg = null; Views._wcThumb = null; Views._wcResult = null;
+    const fileEl = U.$('#wc-file'), analyzeBtn = U.$('#wc-analyze'), pick = U.$('#wc-pick'), noteEl = U.$('#wc-note');
+    if (!fileEl) return;
+    const refresh = () => { analyzeBtn.disabled = !(Views._wcImg || (noteEl && noteEl.value.trim())); };
+    if (noteEl) noteEl.addEventListener('input', refresh);
+    if (pick) pick.onclick = () => fileEl.click();
+    fileEl.onchange = () => {
+      const file = fileEl.files[0]; if (!file) return;
+      const fn = U.$('#wc-fname'); if (fn) fn.textContent = '📎 ' + file.name;
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const m = /^data:(.*?);base64,(.*)$/.exec(reader.result);
+        if (!m) return U.toast('تعذّر قراءة الصورة', 'err');
+        Views._wcImg = { mediaType: m[1], data: m[2] };
+        U.$('#wc-preview').innerHTML = `<img src="${reader.result}" style="max-width:100%;max-height:230px;border-radius:10px" alt="معاينة"/>`;
+        Views._wcThumb = await Views._downscale(reader.result, 480, 0.55);
+        refresh();
+      };
+      reader.readAsDataURL(file);
+    };
+
+    analyzeBtn.onclick = async () => {
+      const note = noteEl.value.trim(), emp = U.$('#wc-emp').value;
+      Views._wcEmp = emp;
+      if (!Views._wcImg && !note) return U.toast('اختر صورة أو أضف ملاحظة', 'err');
+      const st = U.$('#wc-state'); st.textContent = '⏳ جارٍ التفتيش...'; analyzeBtn.disabled = true;
+      try {
+        const r = await window.AI.inspectWorker(Views._wcImg || { mediaType: 'image/jpeg', data: '' }, note, emp);
+        st.textContent = ''; Views._wcResult = r;
+        const box = U.$('#wc-results');
+        if (r.error) { box.innerHTML = `<div class="empty"><span class="ic">⚠</span>${esc(r.error)}</div>`; analyzeBtn.disabled = false; return; }
+        if (r.needsKey) { box.innerHTML = U.empty(r.hint, '🔑'); analyzeBtn.disabled = false; return; }
+
+        const score = r.score != null ? r.score : 0;
+        const col = score >= 85 ? 'green' : score >= 60 ? 'amber' : 'red';
+        const items = (r.items || []).map(it => `
+          <div class="row-line">
+            <span class="dot ${it.status === 'مطابق' ? 'green' : it.status === 'مخالف' ? 'red' : 'amber'}"></span>
+            <div style="flex:1">${esc(it.criterion)}${it.note ? `<br><small class="muted">${esc(it.note)}</small>` : ''}</div>
+            ${U.badge(it.status || '—', it.status === 'مطابق' ? 'green' : it.status === 'مخالف' ? 'red' : 'gray')}
+          </div>`).join('');
+        const viols = (r.items || []).filter(i => i.status === 'مخالف');
+        box.innerHTML = `
+          <div class="donut-wrap" style="margin-bottom:12px">${U.donut(score, 'الالتزام')}
+            <div style="flex:1"><div style="margin-bottom:6px">${U.statusBadge(r.result || (score >= 85 ? 'مطابق' : 'مخالف'))} ${r.source === 'ai' ? U.badge('ذكاء اصطناعي', 'blue') : U.badge('محلي', 'gray')}</div>
+            <p class="muted" style="font-size:13px">${esc(r.summary || '')}</p></div>
+          </div>
+          ${items}
+          ${viols.length ? `<div class="card" style="margin-top:12px;background:#fef2f2;border-color:#fecaca">
+            <p style="font-size:13px;margin-bottom:4px"><strong>الإجراء التصحيحي:</strong> ${esc(r.corrective || '')}</p>
+            <p style="font-size:13px"><strong>الإجراء الوقائي:</strong> ${esc(r.preventive || '')}</p>
+            ${r.reference ? `<p class="muted" style="font-size:12px;margin-top:4px">المرجع: ${esc(r.reference)}</p>` : ''}
+          </div>` : ''}
+          <div class="form-actions" style="margin-top:14px">
+            <button class="btn-primary btn-sm" id="wc-save">حفظ نتيجة الفحص</button>
+            ${viols.length ? `<button class="btn-secondary btn-sm" id="wc-nc">+ إنشاء حالة عدم مطابقة</button>` : ''}
+          </div>`;
+        U.$('#wc-save').onclick = () => Views.saveWorkerCheck();
+        const ncBtn = U.$('#wc-nc'); if (ncBtn) ncBtn.onclick = () => Views.ncFromWorker();
+        App.buildNav();
+      } catch (e) { st.textContent = ''; U.$('#wc-results').innerHTML = `<div class="empty"><span class="ic">⚠</span>${esc(e.message)}</div>`; }
+      analyzeBtn.disabled = false;
+    };
+  };
+
+  Views.saveWorkerCheck = function () {
+    const r = Views._wcResult; if (!r) return;
+    S.add('hygieneChecks', {
+      id: S.uid('hc'), date: S.todayISO(), time: new Date().toTimeString().slice(0, 5),
+      employee: Views._wcEmp || '', result: r.result || '', score: r.score != null ? r.score : 0,
+      source: r.source, thumb: Views._wcThumb || '',
+    });
+    const hc = S.col('hygieneChecks'); if (hc.length > 20) { hc.length = 20; S.save(); }
+    U.toast('تم حفظ نتيجة الفحص', 'ok'); App.render();
+  };
+
+  Views.ncFromWorker = function () {
+    const r = Views._wcResult; if (!r) return;
+    const viols = (r.items || []).filter(i => i.status === 'مخالف').map(i => i.criterion);
+    S.add('ncs', {
+      id: S.uid('nc'), title: 'مخالفة نظافة عامل' + (Views._wcEmp ? ' (' + Views._wcEmp + ')' : '') + ': ' + viols.join('، '),
+      severity: 'متوسطة', source: 'فحص العامل بالذكاء الاصطناعي', status: 'مفتوحة', date: S.todayISO(),
+      owner: App.user.name, dueDate: S.shift(2),
+      action: (r.corrective || '') + (r.reference ? '\n[المرجع: ' + r.reference + ']' : ''),
+      preventiveAction: r.preventive || '', rootCause: '', photo: Views._wcThumb || '',
+    });
+    U.toast('تم إنشاء حالة عدم مطابقة مرفقة بالدليل المصوّر', 'ok'); App.buildNav();
+  };
+
   /* ===================== المواصفات والمعايير ===================== */
   Views.standards = function () {
     const regions = ['سعودية', 'خليجية', 'عالمية'];

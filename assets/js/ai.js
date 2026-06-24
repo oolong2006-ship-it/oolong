@@ -153,5 +153,55 @@ ${window.Standards.knowledgeContext()}
     };
   }
 
-  window.AI = { cfg, setCfg, hasKey, enabled, MODEL, generateCapa, evaluateItem, analyzePhoto };
+  /* ============ 4) تفتيش العامل بالتصوير ============ */
+  const WORKER_CRITERIA = [
+    'ارتداء الزي النظيف المخصّص للعمل',
+    'تغطية الشعر بالكامل (غطاء رأس/شبكة)',
+    'ارتداء الكمامة بشكل صحيح يغطي الأنف والفم',
+    'ارتداء القفازات عند مناولة الغذاء الجاهز (عند الحاجة)',
+    'خلو اليدين من المجوهرات والساعات والأظافر الطويلة/الطلاء',
+    'نظافة اليدين والزي بشكل عام',
+    'عدم وجود جروح مكشوفة أو ضمادات غير محكمة',
+    'المريول/الإيبرون نظيف وسليم',
+    'عدم التدخين أو الأكل أثناء العمل',
+  ];
+
+  // image: { data: base64 (بدون بادئة), mediaType }
+  async function inspectWorker(image, note, employeeName) {
+    if (enabled()) {
+      try {
+        const content = [
+          { type: 'image', source: { type: 'base64', media_type: image.mediaType, data: image.data } },
+          { type: 'text', text:
+            `أنت مفتش سلامة غذاء. قيّم التزام العامل في الصورة باشتراطات النظافة الصحية لمتداولي الغذاء${employeeName ? ' (العامل: ' + employeeName + ')' : ''}.${note ? ' ملاحظة المفتش: ' + note : ''}
+قيّم كل معيار من المعايير التالية بدقة بناءً على ما يظهر في الصورة:
+${WORKER_CRITERIA.map((c, i) => (i + 1) + '. ' + c).join('\n')}
+أعِد JSON فقط بالشكل:
+{"summary":"وصف موجز لمظهر العامل","result":"مطابق|مخالف","score":0-100,"items":[{"criterion":"نص المعيار","status":"مطابق|مخالف|غير واضح","note":"ملاحظة موجزة"}],"corrective":"الإجراء التصحيحي الفوري للمخالفات","preventive":"الإجراء الوقائي لمنع التكرار","reference":"المرجع/المواصفة"}
+قيّم status لكل معيار: "مطابق" إن ظهر الالتزام، "مخالف" إن ظهرت مخالفة، "غير واضح" إن لم يظهر في الصورة.` },
+        ];
+        const text = await callClaude(content, { maxTokens: 2000 });
+        const j = parseJSON(text);
+        if (j && Array.isArray(j.items)) return { ...j, source: 'ai' };
+      } catch (e) {
+        return { items: [], error: e.message, source: 'ai' };
+      }
+    }
+    // محرك احتياطي: لا يمكن رؤية الصورة دون مفتاح
+    if (note && note.trim()) {
+      const m = window.Standards.matchCapa(note);
+      return {
+        summary: 'تقييم مبني على ملاحظة المفتش (الوضع المحلي).',
+        result: 'مخالف', score: 60,
+        items: WORKER_CRITERIA.map(c => ({ criterion: c, status: 'غير واضح', note: '' })),
+        corrective: m.corrective, preventive: m.preventive, reference: m.ref, source: 'local',
+      };
+    }
+    return {
+      items: [], needsKey: true, source: 'local',
+      hint: 'تفتيش العامل بالتصوير يتطلب تفعيل خدمة الذكاء الاصطناعي من الإعدادات.',
+    };
+  }
+
+  window.AI = { cfg, setCfg, hasKey, enabled, MODEL, generateCapa, evaluateItem, analyzePhoto, inspectWorker, WORKER_CRITERIA };
 })();

@@ -10,6 +10,7 @@
     { key: 'monitor', icon: '📷', label: 'الرصد بالتصوير الذكي', title: 'الرصد بالتصوير الذكي' },
     { key: 'temperature', icon: '🌡️', label: 'مراقبة الحرارة', title: 'مراقبة درجات الحرارة' },
     { key: 'employees', icon: '👥', label: 'العاملون والشهادات', title: 'العاملون والشهادات الصحية' },
+    { key: 'workercheck', icon: '🧑‍🔬', label: 'فحص العامل بالتصوير', title: 'فحص نظافة العامل بالذكاء الاصطناعي' },
     { key: 'nc', icon: '⚠️', label: 'عدم المطابقة (CAPA)', title: 'عدم المطابقة والإجراءات التصحيحية' },
     { key: 'suppliers', icon: '🚚', label: 'الموردون', title: 'اعتماد الموردين' },
     { key: 'cleaning', icon: '🧹', label: 'التنظيف والآفات', title: 'التنظيف ومكافحة الآفات' },
