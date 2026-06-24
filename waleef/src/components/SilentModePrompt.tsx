@@ -1,29 +1,40 @@
 "use client";
 
 import { useApp } from "@/context/AppContext";
-import { STRINGS } from "@/lib/i18n";
 
 interface SilentModePromptProps {
   onAction: (action: "calm" | "browse" | "soothe") => void;
 }
 
-/**
- * Shown when the user goes quiet for a while. Calm, low-pressure,
- * never demanding — presence is enough.
- */
+const COPY = {
+  ar: {
+    prompt: "خذ وقتك… وجودك هنا يكفي كبداية.",
+    calm: "أحتاج لحظة هدوء",
+    browse: "خلني أتصفح",
+    soothe: "اسمعني شيء يريحني",
+  },
+  en: {
+    prompt: "Take your time… your presence here is enough as a start.",
+    calm: "I need a quiet moment",
+    browse: "Let me browse",
+    soothe: "Tell me something soothing",
+  },
+};
+
+/** Shown when the user goes quiet. Calm, low-pressure — presence is enough. */
 export default function SilentModePrompt({ onAction }: SilentModePromptProps) {
   const { language } = useApp();
-  const t = STRINGS[language];
+  const c = COPY[language];
 
   const actions: { id: "calm" | "browse" | "soothe"; label: string }[] = [
-    { id: "calm", label: t.silentCalm },
-    { id: "browse", label: t.silentBrowse },
-    { id: "soothe", label: t.silentSoothe },
+    { id: "calm", label: c.calm },
+    { id: "browse", label: c.browse },
+    { id: "soothe", label: c.soothe },
   ];
 
   return (
     <div className="animate-fade-up rounded-2xl border border-sage-100 bg-sage-50/60 p-5 text-center">
-      <p className="text-base leading-relaxed text-ink-soft">{t.silentPrompt}</p>
+      <p className="text-base leading-relaxed text-ink-soft">{c.prompt}</p>
       <div className="mt-4 flex flex-wrap justify-center gap-2">
         {actions.map((a) => (
           <button

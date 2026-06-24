@@ -8,34 +8,58 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { ContactPreference, Language } from "@/lib/types";
+import type { ContactPreference, Language, Persona } from "@/lib/types";
 
-export type Screen = "welcome" | "onboarding" | "chat";
+export type Stage = "welcome" | "onboarding" | "app";
+export type Tab =
+  | "chat"
+  | "checkin"
+  | "journal"
+  | "progress"
+  | "support"
+  | "referrals"
+  | "settings";
 
 interface AppState {
   language: Language;
   setLanguage: (l: Language) => void;
   toggleLanguage: () => void;
-  screen: Screen;
-  setScreen: (s: Screen) => void;
+
+  stage: Stage;
+  setStage: (s: Stage) => void;
+
+  tab: Tab;
+  setTab: (t: Tab) => void;
+
+  persona: Persona | null;
+  setPersona: (p: Persona) => void;
+
   contactPreference: ContactPreference | null;
   setContactPreference: (p: ContactPreference) => void;
+
   isGuest: boolean;
   setIsGuest: (v: boolean) => void;
+
+  /** A pending message to seed into the chat (from support paths). */
+  pendingSeed: string | null;
+  setPendingSeed: (s: string | null) => void;
+
+  goToChatWith: (seed: string) => void;
 }
 
 const AppContext = createContext<AppState | null>(null);
-
 const LANG_KEY = "waleef.lang";
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>("ar");
-  const [screen, setScreen] = useState<Screen>("welcome");
+  const [stage, setStage] = useState<Stage>("welcome");
+  const [tab, setTab] = useState<Tab>("chat");
+  const [persona, setPersona] = useState<Persona | null>(null);
   const [contactPreference, setContactPreference] =
     useState<ContactPreference | null>(null);
   const [isGuest, setIsGuest] = useState(false);
+  const [pendingSeed, setPendingSeed] = useState<string | null>(null);
 
-  // Restore saved language preference (simple mock persistence).
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem(LANG_KEY) as Language | null;
@@ -45,7 +69,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Keep <html> dir/lang in sync for RTL support.
   useEffect(() => {
     const html = document.documentElement;
     html.lang = language;
@@ -59,21 +82,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const setLanguage = (l: Language) => setLanguageState(l);
   const toggleLanguage = () =>
-    setLanguageState((prev) => (prev === "ar" ? "en" : "ar"));
+    setLanguageState((p) => (p === "ar" ? "en" : "ar"));
+
+  const goToChatWith = (seed: string) => {
+    setPendingSeed(seed);
+    setTab("chat");
+  };
 
   const value = useMemo<AppState>(
     () => ({
       language,
       setLanguage,
       toggleLanguage,
-      screen,
-      setScreen,
+      stage,
+      setStage,
+      tab,
+      setTab,
+      persona,
+      setPersona,
       contactPreference,
       setContactPreference,
       isGuest,
       setIsGuest,
+      pendingSeed,
+      setPendingSeed,
+      goToChatWith,
     }),
-    [language, screen, contactPreference, isGuest],
+    [language, stage, tab, persona, contactPreference, isGuest, pendingSeed],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

@@ -4,27 +4,28 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useApp } from "@/context/AppContext";
 import { CHIP_TO_MESSAGE, STRINGS } from "@/lib/i18n";
 import { PUBLIC_CATEGORY_IDS } from "@/lib/categories";
-import type {
-  CategoryId,
-  ChatMessage,
-  ReferralCategory,
-  WaleefReply,
-} from "@/lib/types";
+import { saveReferral } from "@/lib/store";
+import type { ChatMessage, ReferralCategory, WaleefReply } from "@/lib/types";
 import QuickChips from "./QuickChips";
 import SilentModePrompt from "./SilentModePrompt";
 import SupportPathCard from "./SupportPathCard";
 import MessageBubble from "./MessageBubble";
 import ReferralModal from "./ReferralModal";
 import CrisisSupportModal from "./CrisisSupportModal";
-import LanguageToggle from "./LanguageToggle";
 
-const SILENT_DELAY_MS = 18000; // show silent-mode prompt after ~18s idle
+const SILENT_DELAY_MS = 18000;
 
 let idCounter = 0;
 const newId = () => `m_${Date.now()}_${idCounter++}`;
 
-export default function ChatScreen() {
-  const { language, setScreen, contactPreference, isGuest } = useApp();
+export default function ChatInterface() {
+  const {
+    language,
+    contactPreference,
+    persona,
+    pendingSeed,
+    setPendingSeed,
+  } = useApp();
   const t = STRINGS[language];
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -42,20 +43,13 @@ export default function ChatScreen() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const silentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Seed the conversation with Waleef's warm intro.
   useEffect(() => {
     setMessages([
-      {
-        id: newId(),
-        role: "waleef",
-        text: t.chatIntro,
-        createdAt: Date.now(),
-      },
+      { id: newId(), role: "waleef", text: t.chatIntro, createdAt: Date.now() },
     ]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Auto-scroll to newest message.
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
@@ -63,7 +57,6 @@ export default function ChatScreen() {
     });
   }, [messages, typing, showSilent]);
 
-  // Silent-mode idle timer.
   const resetSilentTimer = useCallback(() => {
     setShowSilent(false);
     if (silentTimerRef.current) clearTimeout(silentTimerRef.current);
@@ -92,6 +85,9 @@ export default function ChatScreen() {
       },
     ]);
     if (reply.showCrisis) setCrisisOpen(true);
+    if (reply.showReferral && reply.referralCategory) {
+      void saveReferral(reply.referralCategory);
+    }
   }, []);
 
   const callEngine = useCallback(
@@ -111,6 +107,7 @@ export default function ChatScreen() {
               language,
               secondsSinceLast,
               contactPreference: contactPreference ?? undefined,
+              persona: persona ?? undefined,
               turnCount: turnCountRef.current,
             },
           }),
@@ -129,7 +126,7 @@ export default function ChatScreen() {
         resetSilentTimer();
       }
     },
-    [language, contactPreference, appendWaleef, resetSilentTimer],
+    [language, contactPreference, persona, appendWaleef, resetSilentTimer],
   );
 
   const sendMessage = useCallback(
@@ -146,6 +143,15 @@ export default function ChatScreen() {
     },
     [callEngine],
   );
+
+  // Seed from a support-path tap.
+  useEffect(() => {
+    if (pendingSeed) {
+      sendMessage(pendingSeed);
+      setPendingSeed(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingSeed]);
 
   const handleChip = useCallback(
     (chipId: string) => {
@@ -170,69 +176,33 @@ export default function ChatScreen() {
   const handleSilentAction = useCallback(
     (action: "calm" | "browse" | "soothe") => {
       setShowSilent(false);
-      const optionId =
-        action === "calm" ? "calm" : action === "browse" ? "browse" : "rest";
+      const optionId = action === "calm" ? "calm" : action === "browse" ? "browse" : "soothe";
       void callEngine({ optionId });
     },
     [callEngine],
   );
 
-  const handleSupportPath = useCallback(
-    (categoryId: CategoryId) => {
-      const seed: Record<string, { ar: string; en: string }> = {
-        overthinking: { ar: "أفكر كثير", en: "I overthink a lot" },
-        anxiety: { ar: "أحس بقلق", en: "I feel anxious" },
-        burnout: { ar: "محترق من الشغل", en: "I'm burned out from work" },
-      };
-      const s = seed[categoryId];
-      if (s) sendMessage(s[language]);
-    },
-    [language, sendMessage],
-  );
-
-  const openReferral = (cat: ReferralCategory) =>
-    setReferral({ open: true, cat });
+  const openReferral = (cat: ReferralCategory) => setReferral({ open: true, cat });
 
   return (
-    <div className="flex h-dvh flex-col bg-gradient-to-b from-cream-50 to-cream-100">
-      {/* Header */}
-      <header className="flex items-center justify-between border-b border-sand-200/70 bg-cream-50/80 px-5 py-3 backdrop-blur">
-        <div className="flex items-center gap-2.5">
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-sage-100">
-            <span className="h-3.5 w-3.5 rounded-full bg-sage-300" />
-          </span>
-          <div className="leading-tight">
-            <p className="font-arabic text-lg font-bold text-sage-400">
-              {t.appName}
-            </p>
-            {isGuest && (
-              <p className="text-[11px] text-ink-faint">{t.guestBadge}</p>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <LanguageToggle />
-          <button
-            type="button"
-            onClick={() => setScreen("welcome")}
-            className="rounded-full px-3 py-1.5 text-sm text-ink-faint transition-colors hover:bg-sand-100"
-          >
-            {t.backHome}
-          </button>
-        </div>
-      </header>
-
-      {/* Messages */}
+    <div className="flex h-full flex-col">
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-5">
         <div className="mx-auto flex max-w-md flex-col gap-4">
-          {/* A few gentle support paths near the top (not a big menu). */}
           {messages.length <= 1 && (
             <div className="space-y-2">
               {PUBLIC_CATEGORY_IDS.map((id) => (
                 <SupportPathCard
                   key={id}
                   categoryId={id}
-                  onOpen={handleSupportPath}
+                  onOpen={() => {
+                    const seed =
+                      id === "overthinking"
+                        ? language === "ar" ? "أفكر كثير" : "I overthink a lot"
+                        : id === "anxiety"
+                          ? language === "ar" ? "أحس بقلق" : "I feel anxious"
+                          : language === "ar" ? "محترق من الشغل" : "I'm burned out";
+                    sendMessage(seed);
+                  }}
                 />
               ))}
             </div>
@@ -244,16 +214,14 @@ export default function ChatScreen() {
               message={m}
               onOption={handleOption}
               onCrisis={() => setCrisisOpen(true)}
-              onReferral={() =>
-                openReferral(m.referralCategory ?? "psychologist")
-              }
+              onReferral={() => openReferral(m.referralCategory ?? "psychologist")}
               crisisLabel={t.crisisButton}
               referralLabel={t.referralConnect}
             />
           ))}
 
           {typing && (
-            <div className="flex items-center gap-1.5 rounded-2xl rounded-bl-md border border-sand-200 bg-cream-50 px-4 py-3 text-ink-faint w-fit">
+            <div className="flex w-fit items-center gap-1.5 rounded-2xl rounded-bl-md border border-sand-200 bg-cream-50 px-4 py-3 text-ink-faint">
               <span className="text-xs">{t.waleefTyping}</span>
               <span className="flex gap-1">
                 <span className="h-1.5 w-1.5 animate-dot-pulse rounded-full bg-sage-300" />
@@ -263,14 +231,11 @@ export default function ChatScreen() {
             </div>
           )}
 
-          {showSilent && !typing && (
-            <SilentModePrompt onAction={handleSilentAction} />
-          )}
+          {showSilent && !typing && <SilentModePrompt onAction={handleSilentAction} />}
         </div>
       </div>
 
-      {/* Composer */}
-      <div className="border-t border-sand-200/70 bg-cream-50/90 px-5 pb-5 pt-3 backdrop-blur">
+      <div className="border-t border-sand-200/70 bg-cream-50/90 px-5 pb-4 pt-3 backdrop-blur">
         <div className="mx-auto max-w-md space-y-3">
           {messages.length <= 3 && <QuickChips onPick={handleChip} disabled={typing} />}
           <form
@@ -296,7 +261,7 @@ export default function ChatScreen() {
             />
             <button
               type="submit"
-              disabled={!input.trim() || typing}
+              disabled={typing}
               aria-label={t.send}
               className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-sage-400 text-cream-50 shadow-soft transition-all active:scale-95 enabled:hover:bg-sage-500 disabled:opacity-40"
             >
@@ -306,7 +271,6 @@ export default function ChatScreen() {
         </div>
       </div>
 
-      {/* Modals */}
       <ReferralModal
         open={referral.open}
         category={referral.cat}

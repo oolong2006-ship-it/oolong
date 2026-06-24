@@ -3,17 +3,17 @@
 import { useApp } from "@/context/AppContext";
 import WelcomeScreen from "./WelcomeScreen";
 import OnboardingFlow from "./OnboardingFlow";
-import ChatScreen from "./ChatScreen";
+import AppShell from "./AppShell";
 
-/** Top-level screen router for the single-page Waleef experience. */
+/** Top-level stage router for the single-page Waleef experience. */
 export default function WaleefApp() {
-  const { screen } = useApp();
+  const { stage } = useApp();
 
-  switch (screen) {
+  switch (stage) {
     case "onboarding":
       return <OnboardingFlow />;
-    case "chat":
-      return <ChatScreen />;
+    case "app":
+      return <AppShell />;
     case "welcome":
     default:
       return <WelcomeScreen />;

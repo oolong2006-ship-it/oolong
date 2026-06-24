@@ -1,79 +1,65 @@
 // ─────────────────────────────────────────────────────────────
-// Core domain types for Waleef / وليف
+// Core domain types for Waleef / وليف — V1
 // ─────────────────────────────────────────────────────────────
 
 export type Language = "ar" | "en";
 
-/** How the user prefers Waleef to communicate (onboarding). */
-export type ContactPreference = "text" | "voice_later" | "browse" | "let_waleef";
+/** How the user wants Waleef to be with them (onboarding persona). */
+export type Persona = "listen" | "organize" | "calm" | "silent" | "let_waleef";
 
-/** Emotional read of the user's message. */
-export type Mood =
-  | "neutral"
-  | "sad"
-  | "anxious"
-  | "angry"
-  | "overwhelmed"
-  | "tired"
-  | "numb"
-  | "lonely"
-  | "ashamed"
-  | "hopeful"
+/** Preferred communication channel (onboarding). */
+export type ContactPreference = "text" | "voice_later" | "browse";
+
+/** Traffic-light urgency used by the brain engine. */
+export type Urgency = "green" | "yellow" | "orange" | "red";
+
+/** Conversational mode the engine selects. */
+export type Mode =
+  | "listening"
+  | "reflection"
+  | "quick_relief"
+  | "guided"
+  | "referral"
   | "crisis";
 
-/** How time-sensitive / serious the message is. */
-export type Urgency = "low" | "medium" | "high" | "crisis";
-
-/** The voice Waleef should answer in. */
-export type Tone = "gentle" | "warm" | "grounding" | "brief" | "urgent";
-
-/** Internal support categories. Not all are exposed in the UI. */
+/** Engine support categories. */
 export type CategoryId =
+  | "emotions"
   | "overthinking"
   | "anxiety"
   | "burnout"
-  | "social_anxiety"
-  | "addiction"
-  | "identity"
-  | "body_image"
-  | "chronic_illness"
-  | "elderly"
+  | "loneliness"
+  | "self_confidence"
+  | "relationships"
   | "family"
-  | "financial"
-  | "spiritual"
-  | "trauma"
+  | "work_money"
+  | "addictions"
+  | "body_image"
+  | "identity"
+  | "spiritual_values"
+  | "health"
   | "crisis"
-  | "general";
-
-/** A gentle next step Waleef can take. */
-export type SuggestedAction =
-  | "listen"
-  | "validate"
-  | "ground"
-  | "quick_relief"
-  | "offer_options"
-  | "suggest_referral"
-  | "crisis_support";
+  | "unknown";
 
 /** Specialist categories for gentle professional referral. */
 export type ReferralCategory =
   | "psychologist"
   | "psychiatrist"
-  | "addiction_specialist"
   | "family_counselor"
+  | "addiction_specialist"
   | "career_coach"
   | "crisis_support";
 
+/**
+ * The structured read of a user message produced by detectUserState.
+ * Shape matches the V1 spec.
+ */
 export interface UserState {
-  mood: Mood;
-  urgency: Urgency;
+  emotion: string;
   category: CategoryId;
-  tone: Tone;
-  suggestedAction: SuggestedAction;
-  /** True when the user signalled they are in a rush / want it short. */
-  quickRelief: boolean;
-  /** True when explicit self-harm / immediate danger language is detected. */
-  isCrisis: boolean;
+  urgency: Urgency;
+  mode: Mode;
+  confidence: number; // 0..1
 }
 
 /** A tappable option Waleef offers (2–3 max in a reply). */
@@ -83,18 +69,12 @@ export interface ReplyOption {
 }
 
 export interface WaleefReply {
-  /** The warm, short message body. */
   text: string;
-  /** 0–3 gentle options to offer the user. */
   options?: ReplyOption[];
-  /** Show the crisis-support modal/banner. */
   showCrisis?: boolean;
-  /** Offer a gentle professional referral. */
   showReferral?: boolean;
   referralCategory?: ReferralCategory;
-  /** This reply is part of Quick Relief Mode. */
-  quickRelief?: boolean;
-  /** The category Waleef read, for light analytics / theming. */
+  mode?: Mode;
   category?: CategoryId;
 }
 
@@ -111,12 +91,55 @@ export interface ChatMessage {
   createdAt: number;
 }
 
-/** Metadata passed to the detection engine. */
 export interface MessageMetadata {
   language: Language;
-  /** Seconds since the user's previous message (if any). */
   secondsSinceLast?: number;
   contactPreference?: ContactPreference;
-  /** Number of user turns so far in the session. */
+  persona?: Persona;
   turnCount?: number;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Persistence models (Supabase tables / local fallback)
+// ─────────────────────────────────────────────────────────────
+
+export type CheckinMood =
+  | "calm"
+  | "tired"
+  | "anxious"
+  | "sad"
+  | "scattered"
+  | "grateful"
+  | "unknown";
+
+export interface DailyCheckin {
+  id: string;
+  userId: string;
+  mood: CheckinMood;
+  note?: string;
+  createdAt: number;
+}
+
+export interface JournalEntry {
+  id: string;
+  userId: string;
+  content: string;
+  detectedEmotion?: string;
+  createdAt: number;
+}
+
+export interface ReferralRecord {
+  id: string;
+  userId: string;
+  type: ReferralCategory;
+  status: "suggested" | "viewed" | "contacted";
+  createdAt: number;
+}
+
+/** Light, warm analysis returned for a journal entry. */
+export interface JournalInsight {
+  emotion: string;
+  emotionLabel: string;
+  need: string;
+  reflection: string;
 }
