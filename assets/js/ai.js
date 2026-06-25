@@ -19,9 +19,14 @@
     return c;
   }
   function hasKey() { return !!(cfg().apiKey && cfg().apiKey.trim()); }
+  // الوضع السحابي مع خطة تتيح الذكاء الاصطناعي → تُستخدم بوابة الخادم (claude-proxy)
+  function cloudAI() {
+    return !!(window.Cloud && window.Cloud.active && window.Cloud.active() && window.Cloud.feature('ai') && window.Cloud.aiProxy);
+  }
   function enabled() {
-    // في الوضع السحابي: يُشترط أن تتيح الخطة ميزة الذكاء الاصطناعي
-    if (window.Cloud && window.Cloud.active && window.Cloud.active() && !window.Cloud.feature('ai')) return false;
+    // في الوضع السحابي: تُستخدم البوابة الآمنة إن أتاحت الخطة الميزة (دون مفتاح محلي)
+    if (window.Cloud && window.Cloud.active && window.Cloud.active()) return cloudAI();
+    // الوضع المحلي: يتطلب مفتاحًا في الإعدادات
     return hasKey() && cfg().enabled !== false;
   }
 
@@ -36,8 +41,17 @@ ${window.Standards.knowledgeContext()}
 عندما يُطلب منك صيغة JSON، أعِد JSON صالحًا فقط دون أي نص إضافي أو علامات تنسيق.`;
   }
 
-  // استدعاء Claude API مباشرة من المتصفح
+  // استدعاء Claude — عبر بوابة الخادم في الوضع السحابي، أو مباشرة بالمفتاح المحلي
   async function callClaude(content, { maxTokens = 1500 } = {}) {
+    // الوضع السحابي: المرور عبر claude-proxy (المفتاح محفوظ في الخادم)
+    if (cloudAI()) {
+      return await window.Cloud.aiProxy({
+        system: systemPrompt(),
+        messages: [{ role: 'user', content }],
+        max_tokens: maxTokens,
+        model: MODEL,
+      });
+    }
     const c = cfg();
     const res = await fetch(API_URL, {
       method: 'POST',

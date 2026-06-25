@@ -1637,6 +1637,17 @@
           <div class="form-actions"><button class="btn-primary" id="save-meta">حفظ</button></div>
         </div>
       </div>
+      ${(window.Cloud && window.Cloud.active && window.Cloud.active()) ? `
+      <div class="card section-gap" style="max-width:560px">
+        <div class="card-title">🤖 الذكاء الاصطناعي (Claude)</div>
+        ${window.Cloud.feature('ai') ? `
+          <p class="muted" style="margin-bottom:10px">يعمل الذكاء الاصطناعي (<strong>${esc(window.AI.MODEL)}</strong>) عبر <strong>بوابة آمنة على الخادم</strong> — مفتاح Anthropic محفوظ في الخادم ولا يظهر في المتصفح. لا حاجة لإدخال أي مفتاح هنا.</p>
+          <div class="form-actions"><button class="btn-secondary" id="ai-test">اختبار الاتصال بالبوابة</button><span id="ai-test-state" class="muted" style="align-self:center"></span></div>
+        ` : `
+          <p class="muted">ميزة الذكاء الاصطناعي غير متضمَّنة في خطتك الحالية (<strong>${esc(window.Cloud.planLimits().label)}</strong>). يرجى الترقية لتفعيلها.</p>
+          <div class="form-actions"><button class="btn-primary" onclick="App.go('billing')">عرض الخطط والترقية</button></div>
+        `}
+      </div>` : `
       <div class="card section-gap" style="max-width:560px">
         <div class="card-title">🤖 الذكاء الاصطناعي (Claude)</div>
         <p class="muted" style="margin-bottom:14px">عند التفعيل يستخدم النظام نموذج <strong>${esc(window.AI.MODEL)}</strong> لتحليل الصور ورصد المخالفات وتقييم البنود وتوليد الإجراءات. يُحفظ المفتاح محليًا على جهازك فقط ولا يُرسل لأي جهة عدا خدمة Claude.</p>
@@ -1651,7 +1662,7 @@
             <span id="ai-test-state" class="muted" style="align-self:center"></span>
           </div>
         </div>
-      </div>
+      </div>`}
       <div class="card section-gap" style="max-width:560px">
         <div class="card-title">🗃️ إدارة البيانات</div>
         <p class="muted" style="margin-bottom:14px">تُحفظ جميع البيانات محليًا على هذا الجهاز. يمكنك تصدير نسخة احتياطية أو إعادة ضبط النظام.</p>
@@ -1683,9 +1694,11 @@
     };
     const aiTest = U.$('#ai-test');
     if (aiTest) aiTest.onclick = async () => {
-      window.AI.setCfg({ apiKey: U.$('#ai-key').value.trim(), enabled: U.$('#ai-enabled').checked });
+      const keyEl = U.$('#ai-key'), enEl = U.$('#ai-enabled');
+      if (keyEl) window.AI.setCfg({ apiKey: keyEl.value.trim(), enabled: enEl ? enEl.checked : true });
       const st = U.$('#ai-test-state');
-      if (!window.AI.hasKey()) { st.textContent = '⚠ أدخل المفتاح أولًا'; return; }
+      const cloud = window.Cloud && window.Cloud.active && window.Cloud.active();
+      if (!cloud && !window.AI.hasKey()) { st.textContent = '⚠ أدخل المفتاح أولًا'; return; }
       st.textContent = '⏳ جارٍ الاختبار...';
       try {
         const r = await window.AI.generateCapa('اختبار اتصال: درجة حرارة ثلاجة مرتفعة');

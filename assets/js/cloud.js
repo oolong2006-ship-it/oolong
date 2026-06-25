@@ -188,6 +188,22 @@
     throw new Error((data && data.error) || 'تعذّر إنشاء فاتورة الدفع');
   }
 
+  // ---------- بوابة الذكاء الاصطناعي (Edge Function) ----------
+  // تستدعي claude-proxy على الخادم حيث يُحفظ مفتاح Anthropic — لا يظهر للمتصفح إطلاقًا.
+  async function aiProxy({ system, messages, max_tokens, model }) {
+    if (!_active) throw new Error('غير متاح');
+    const { data, error } = await client.functions.invoke('claude-proxy', {
+      body: { system, messages, max_tokens, model },
+    });
+    if (error) {
+      let msg = 'تعذّر الاتصال بخدمة الذكاء الاصطناعي (تأكد من نشر دالة claude-proxy وضبط ANTHROPIC_API_KEY)';
+      try { const ctx = await error.context.json(); if (ctx && ctx.error) msg = ctx.error; } catch (_) {}
+      throw new Error(msg);
+    }
+    if (data && data.error) throw new Error(data.error);
+    return (data && data.text) || '';
+  }
+
   // ---------- الخطط ----------
   function planKey() { return (_org && _org.plan) || 'trial'; }
   function planLimits() { return PLAN_LIMITS[planKey()] || PLAN_LIMITS.trial; }
@@ -248,6 +264,6 @@
     enabled, configured, active, init, org,
     signUp, signIn, signOut, currentSession, bootstrap, mountAuth,
     role, canManageTeam, listMembers, invite, listInvitations, removeMember, checkout,
-    planKey, planLimits, feature, trialDaysLeft, PLAN_LIMITS,
+    aiProxy, planKey, planLimits, feature, trialDaysLeft, PLAN_LIMITS,
   };
 })();
