@@ -2,7 +2,7 @@
    sw.js — Service Worker لتشغيل التطبيق دون اتصال (PWA)
    استراتيجية: تخزين مسبق لهيكل التطبيق + cache-first للأصول المحلية
    ============================================================ */
-const CACHE = 'fs-gmp-v4';
+const CACHE = 'fs-gmp-v5';
 
 // أصول هيكل التطبيق (تُخزّن مسبقًا عند التثبيت)
 const SHELL = [
@@ -20,6 +20,7 @@ const SHELL = [
   './assets/js/cloud.js',
   './assets/js/views.js',
   './assets/js/app.js',
+  './assets/icons/logo.png',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
   './assets/icons/icon-maskable-512.png',

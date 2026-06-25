@@ -67,10 +67,8 @@
         U.$('#scrim').classList.toggle('show', open);
       };
       U.$('#scrim').onclick = () => this.closeSidebar();
-      // الأيقونات الموحّدة (علامة، خروج، قائمة المزيد)
+      // الأيقونات الموحّدة (خروج، قائمة المزيد) — علامة العلامة التجارية صورة الشعار
       const I = window.ICONS;
-      U.$('#login-mark').innerHTML = I.shield;
-      U.$('#sidebar-mark').innerHTML = I.shield;
       U.$('#kebab-btn').innerHTML = I.kebab;
       U.$('#logout-btn').querySelector('.lo-ic').innerHTML = I.logout;
       const kmIcons = U.$('#kebab-menu').querySelectorAll('.km-ic');
