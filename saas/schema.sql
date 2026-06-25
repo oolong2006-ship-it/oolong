@@ -21,8 +21,11 @@ create table if not exists public.organizations (
   subscription_status text not null default 'trialing'
                        check (subscription_status in ('trialing','active','past_due','canceled')),
   trial_ends_at       timestamptz not null default (now() + interval '14 days'),
+  current_period_end  timestamptz,
   created_at          timestamptz not null default now()
 );
+-- ترقية آمنة للمشاريع القائمة (تُضيف العمود إن لم يكن موجودًا)
+alter table public.organizations add column if not exists current_period_end timestamptz;
 
 -- ---------- العضويات (ربط المستخدم بالمنشأة + الدور) ----------
 create table if not exists public.memberships (

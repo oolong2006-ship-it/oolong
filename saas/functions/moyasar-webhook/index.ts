@@ -28,9 +28,11 @@ Deno.serve(async (req) => {
         Deno.env.get("SUPABASE_URL")!,
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, // يتجاوز RLS — لا يُكشف للعميل أبدًا
       );
+      // تمديد فترة الاشتراك شهرًا من تاريخ الدفع (عدّلها لو كانت باقتك سنوية)
+      const periodEnd = new Date(Date.now() + 30 * 864e5).toISOString();
       const { error } = await admin
         .from("organizations")
-        .update({ plan, subscription_status: "active" })
+        .update({ plan, subscription_status: "active", current_period_end: periodEnd })
         .eq("id", orgId);
       if (error) return new Response("db error: " + error.message, { status: 500 });
     }
