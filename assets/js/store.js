@@ -343,9 +343,36 @@
       { id: uid('cln'), area: 'شفاطات المطبخ', task: 'تنظيف الفلاتر وإزالة الدهون', frequency: 'شهري', responsible: 'جهة خارجية', lastDone: shift(-20), nextDue: shift(10) },
     ];
 
+    // ---------- خطة HACCP — نقاط التحكم الحرجة (CCPs) ----------
+    const haccp = [
+      { id: uid('ccp'), no: 'CCP-1', step: 'الطهي', hazard: 'بقاء مسببات الأمراض الميكروبية (سالمونيلا، إيكولاي)', hazardType: 'بيولوجي', isCCP: true,
+        criticalLimit: 'حرارة داخلية ≥ 74°م لمدة 15 ثانية للدواجن، و≥ 70°م للحوم المفرومة', monitorWhat: 'الحرارة الداخلية للمنتج', monitorHow: 'ميزان حرارة سبر معاير', monitorFreq: 'كل دفعة طهي', monitorWho: 'طاهي الخط',
+        corrective: 'مواصلة الطهي حتى بلوغ الحرارة المطلوبة، وإلا يُتلف المنتج', verification: 'مراجعة سجلات الطهي يوميًا ومعايرة الميزان أسبوعيًا', records: 'سجل حرارة الطهي', linkedUnit: '' },
+      { id: uid('ccp'), no: 'CCP-2', step: 'التبريد السريع', hazard: 'نمو وتكاثر البكتيريا وإفراز السموم خلال التبريد البطيء', hazardType: 'بيولوجي', isCCP: true,
+        criticalLimit: 'من 60°م إلى 21°م خلال ساعتين، ثم إلى ≤ 4°م خلال 4 ساعات (إجمالي ≤ 6 ساعات)', monitorWhat: 'حرارة المنتج وزمن التبريد', monitorHow: 'ميزان حرارة + توقيت', monitorFreq: 'كل دفعة تبريد', monitorWho: 'مشرف المطبخ',
+        corrective: 'إعادة التسخين إلى 74°م ثم إعادة التبريد مرة واحدة، أو الإتلاف عند تجاوز الزمن', verification: 'مراجعة سجل التبريد يوميًا', records: 'سجل التبريد', linkedUnit: '' },
+      { id: uid('ccp'), no: 'CCP-3', step: 'الحفظ البارد', hazard: 'نمو البكتيريا الممرضة عند تجاوز حرارة الأمان', hazardType: 'بيولوجي', isCCP: true,
+        criticalLimit: 'حرارة الحفظ البارد ≤ 5°م', monitorWhat: 'حرارة الثلاجات', monitorHow: 'مؤشر/ميزان حرارة الثلاجة', monitorFreq: '4 مرات يوميًا', monitorWho: 'مناوب المطبخ',
+        corrective: 'نقل المنتج لثلاجة سليمة، تقييم صلاحية المنتج، استدعاء الصيانة', verification: 'مطابقة سجل الحرارة بوحدة مراقبة الحرارة', records: 'سجل حرارة الثلاجات', linkedUnit: 'ثلاجة اللحوم' },
+      { id: uid('ccp'), no: 'CCP-4', step: 'الحفظ الساخن', hazard: 'بقاء/نمو الميكروبات في منطقة الخطر الحراري', hazardType: 'بيولوجي', isCCP: true,
+        criticalLimit: 'حرارة الحفظ الساخن ≥ 63°م', monitorWhat: 'حرارة البوفيه/الحافظة الساخنة', monitorHow: 'ميزان حرارة سبر', monitorFreq: 'كل ساعتين', monitorWho: 'مشرف الخدمة',
+        corrective: 'إعادة التسخين إلى 74°م، أو إتلاف ما تجاوز ساعتين دون ضبط', verification: 'مراجعة السجل يوميًا', records: 'سجل الحفظ الساخن', linkedUnit: 'حافظة ساخنة - بوفيه' },
+      { id: uid('ccp'), no: 'CP-1', step: 'الاستلام', hazard: 'استلام مواد فاسدة أو ملوّثة أو خارج سلسلة التبريد', hazardType: 'بيولوجي', isCCP: false,
+        criticalLimit: 'المبرّد ≤ 4°م، المجمّد ≤ -18°م، سلامة التغليف وصلاحية التاريخ', monitorWhat: 'حرارة وحالة المواد المستلمة', monitorHow: 'ميزان حرارة + فحص بصري', monitorFreq: 'كل شحنة', monitorWho: 'أمين المستودع',
+        corrective: 'رفض الشحنة غير المطابقة وتوثيق المرتجع', verification: 'مراجعة سجل الاستلام أسبوعيًا', records: 'سجل استلام المواد', linkedUnit: '' },
+    ];
+
+    // ---------- تتبّع الدفعات (Lot/Batch) ----------
+    const batches = [
+      { id: uid('lot'), lotNo: 'LOT-2406-A', product: 'صدور دجاج طازجة', category: 'لحوم ودواجن', supplier: 'مؤسسة اللحوم الطازجة', receivedDate: shift(-1), qty: 40, unit: 'كجم', expiry: shift(2), storage: 'ثلاجة اللحوم', status: 'في المخزون', notes: '' },
+      { id: uid('lot'), lotNo: 'LOT-2406-B', product: 'طماطم طازجة', category: 'خضار وفواكه', supplier: 'شركة الخضار الذهبية', receivedDate: shift(-2), qty: 25, unit: 'كجم', expiry: shift(5), storage: 'ثلاجة الخضار', status: 'قيد الاستخدام', notes: '' },
+      { id: uid('lot'), lotNo: 'LOT-2405-C', product: 'حليب كامل الدسم', category: 'ألبان', supplier: 'موزع الألبان الوطني', receivedDate: shift(-6), qty: 60, unit: 'لتر', expiry: shift(-1), storage: 'ثلاجة الألبان', status: 'في المخزون', notes: 'قارب الانتهاء — يتطلب فحصًا' },
+      { id: uid('lot'), lotNo: 'LOT-2406-D', product: 'أرز بسمتي', category: 'مواد جافة', supplier: 'موزع المواد الجافة', receivedDate: shift(-10), qty: 100, unit: 'كجم', expiry: shift(300), storage: 'المستودع الجاف', status: 'قيد الاستخدام', notes: '' },
+    ];
+
     return {
       meta: { facilityName: 'مطعم وكافيه الذواقة', license: 'CR-1010xxxxxx', city: 'الرياض', created: todayISO() },
-      employees: emps, tempLogs, inspections, ncs, suppliers, pest, cleaning,
+      employees: emps, tempLogs, inspections, ncs, suppliers, pest, cleaning, haccp, batches,
     };
   }
 
@@ -425,6 +452,11 @@
     const lastInsp = [...db.inspections].sort((a, b) => b.date.localeCompare(a.date))[0];
     const compliance = lastInsp ? inspectionScore(lastInsp) : 0;
     const overdueCleaning = db.cleaning.filter(c => daysFromToday(c.nextDue) < 0);
+    const batches = db.batches || [];
+    const activeBatches = batches.filter(b => b.status !== 'مستهلك' && b.status !== 'مسحوب');
+    const expiredBatches = activeBatches.filter(b => daysFromToday(b.expiry) < 0);
+    const recalledBatches = batches.filter(b => b.status === 'مسحوب');
+    const ccps = (db.haccp || []).filter(h => h.isCCP);
 
     // مؤشر الجاهزية للتفتيش (مرجّح)
     let readiness = 100;
@@ -443,6 +475,8 @@
       expiringCards: expiringCards.length, expiredCards: expiredCards.length,
       tempBreaches: tempBreaches.length, overdueCleaning: overdueCleaning.length,
       totalEmployees: db.employees.length, totalSuppliers: db.suppliers.length,
+      activeBatches: activeBatches.length, expiredBatches: expiredBatches.length,
+      recalledBatches: recalledBatches.length, ccpCount: ccps.length,
       lastInsp,
     };
   }

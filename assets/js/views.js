@@ -501,6 +501,291 @@
     U.confirmDialog('حذف هذه الحالة؟', () => { S.remove('ncs', id); U.toast('تم الحذف', 'ok'); App.render(); }, 'حذف');
   };
 
+  /* ===================== خطة HACCP — نقاط التحكم الحرجة ===================== */
+  Views.haccp = function () {
+    const list = S.col('haccp');
+    const ccps = list.filter(h => h.isCCP), cps = list.filter(h => !h.isCCP);
+    const typeBadge = (t) => U.badge(t, t === 'بيولوجي' ? 'red' : t === 'كيميائي' ? 'amber' : 'blue');
+    const rows = list.map(h => `<tr>
+      <td><strong>${esc(h.no)}</strong></td>
+      <td><strong>${esc(h.step)}</strong><br><small class="muted">${esc(h.hazard)}</small></td>
+      <td>${typeBadge(h.hazardType)}</td>
+      <td style="max-width:260px"><small>${esc(h.criticalLimit)}</small></td>
+      <td>${h.isCCP ? U.badge('CCP', 'red') : U.badge('CP', 'gray')}${h.linkedUnit ? `<br><small class="muted">🌡️ ${esc(h.linkedUnit)}</small>` : ''}</td>
+      <td class="t-actions">
+        <button class="btn-secondary btn-sm" onclick="Views.editHaccp('${h.id}')">تفاصيل</button>
+        <button class="btn-danger btn-sm" onclick="Views.delHaccp('${h.id}')">حذف</button>
+      </td>
+    </tr>`).join('');
+    return `
+      <div class="page-head">
+        <div><h2>خطة الهاسب (HACCP) ونقاط التحكم الحرجة</h2><p>تحليل المخاطر وتحديد نقاط التحكم الحرجة (CCP) وحدودها ومراقبتها وإجراءاتها التصحيحية والتحقق منها — وفق Codex و ISO 22000</p></div>
+        <div class="spacer"></div>
+        <button class="btn-secondary" onclick="Views.haccpTree()">🌳 شجرة القرار</button>
+        <button class="btn-primary" onclick="Views.editHaccp()">+ نقطة تحكم</button>
+      </div>
+      <div class="grid cols-3" style="margin-bottom:18px">
+        <div class="card kpi ${ccps.length ? 'good' : 'warn'}"><div class="kpi-ic">🛡️</div><div class="kpi-label">نقاط التحكم الحرجة (CCP)</div><div class="kpi-value">${ccps.length}</div></div>
+        <div class="card kpi"><div class="kpi-ic">📍</div><div class="kpi-label">نقاط تحكم (CP)</div><div class="kpi-value">${cps.length}</div></div>
+        <div class="card kpi"><div class="kpi-ic">🔗</div><div class="kpi-label">مرتبطة بمراقبة الحرارة</div><div class="kpi-value">${list.filter(h => h.linkedUnit).length}</div></div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>الرقم</th><th>الخطوة / الخطر</th><th>نوع الخطر</th><th>الحد الحرج</th><th>التصنيف</th><th></th></tr></thead>
+        <tbody>${rows}</tbody></table></div>
+      <p class="muted" style="font-size:12px;margin-top:12px">CCP: نقطة تحكم حرجة يجب ضبطها لمنع خطر على السلامة. CP: نقطة تحكم عامة. استخدم «شجرة القرار» لتحديد ما إذا كانت الخطوة CCP.</p>`;
+  };
+
+  Views.editHaccp = function (id) {
+    const h = id ? S.get('haccp', id) : { no: '', step: '', hazard: '', hazardType: 'بيولوجي', isCCP: true, criticalLimit: '', monitorWhat: '', monitorHow: '', monitorFreq: '', monitorWho: '', corrective: '', verification: '', records: '', linkedUnit: '' };
+    const sel = (val, opts) => opts.map(o => `<option ${o === val ? 'selected' : ''}>${o}</option>`).join('');
+    const units = ['', ...new Set(S.col('tempLogs').map(t => t.unit))];
+    U.modal(id ? 'تفاصيل نقطة التحكم' : 'نقطة تحكم جديدة', `
+      <div class="form-grid two">
+        <div class="field"><label>الرقم</label><input name="no" value="${esc(h.no)}" placeholder="CCP-1" /></div>
+        <div class="field"><label>خطوة العملية</label><input name="step" value="${esc(h.step)}" placeholder="الطهي" /></div>
+        <div class="field"><label>نوع الخطر</label><select name="hazardType">${sel(h.hazardType, ['بيولوجي', 'كيميائي', 'فيزيائي'])}</select></div>
+        <div class="field"><label>التصنيف</label><select name="isCCP">${sel(h.isCCP ? 'CCP (نقطة حرجة)' : 'CP (نقطة تحكم)', ['CCP (نقطة حرجة)', 'CP (نقطة تحكم)'])}</select></div>
+        <div class="field field-full"><label>وصف الخطر</label><input name="hazard" value="${esc(h.hazard)}" /></div>
+        <div class="field field-full"><label>الحد الحرج (Critical Limit)</label><textarea name="criticalLimit">${esc(h.criticalLimit)}</textarea></div>
+        <div class="field"><label>المراقبة: ماذا؟</label><input name="monitorWhat" value="${esc(h.monitorWhat)}" /></div>
+        <div class="field"><label>المراقبة: كيف؟</label><input name="monitorHow" value="${esc(h.monitorHow)}" /></div>
+        <div class="field"><label>المراقبة: التكرار</label><input name="monitorFreq" value="${esc(h.monitorFreq)}" /></div>
+        <div class="field"><label>المراقبة: المسؤول</label><input name="monitorWho" value="${esc(h.monitorWho)}" /></div>
+        <div class="field field-full"><label>الإجراء التصحيحي عند الانحراف</label><textarea name="corrective">${esc(h.corrective)}</textarea></div>
+        <div class="field field-full"><label>التحقق (Verification)</label><textarea name="verification">${esc(h.verification)}</textarea></div>
+        <div class="field"><label>السجلات</label><input name="records" value="${esc(h.records)}" /></div>
+        <div class="field"><label>ربط بوحدة حرارة</label><select name="linkedUnit">${sel(h.linkedUnit, units)}</select></div>
+      </div>
+      <div class="form-actions" style="margin-top:14px"><button class="btn-primary" id="save">حفظ</button></div>`,
+      { wide: true, onOpen: (root) => {
+        U.$('#save').onclick = () => {
+          const f = U.readForm(root);
+          if (!f.step) return U.toast('أدخل خطوة العملية', 'err');
+          f.isCCP = f.isCCP.indexOf('CCP') === 0;
+          if (id) S.update('haccp', id, f); else S.add('haccp', f);
+          U.closeModal(); U.toast('تم الحفظ', 'ok'); App.render();
+        };
+      } });
+  };
+
+  Views.delHaccp = function (id) {
+    U.confirmDialog('حذف نقطة التحكم هذه؟', () => { S.remove('haccp', id); U.toast('تم الحذف', 'ok'); App.render(); }, 'حذف');
+  };
+
+  // شجرة قرار Codex لتحديد ما إذا كانت الخطوة نقطة تحكم حرجة (CCP)
+  Views._dtState = { step: 'q1', hazard: '', stepName: '' };
+  Views.haccpTree = function () {
+    Views._dtState = { step: 'intro', hazard: '', stepName: '' };
+    U.modal('شجرة قرار تحديد نقطة التحكم الحرجة (CCP)', '<div id="dt-body"></div>', { wide: true, onOpen: () => Views._dtRender() });
+  };
+  Views._dtRender = function () {
+    const b = U.$('#dt-body'); if (!b) return;
+    const st = Views._dtState;
+    const Q = (q, hint) => `<div class="card" style="background:#f8fafc"><strong style="font-size:15px">${q}</strong>${hint ? `<p class="muted" style="font-size:12px;margin-top:6px">${hint}</p>` : ''}</div>`;
+    const btns = (yes, no) => `<div class="form-actions" style="margin-top:14px"><button class="btn-primary" onclick="Views._dtAns('${yes}')">نعم</button><button class="btn-secondary" onclick="Views._dtAns('${no}')">لا</button></div>`;
+    const result = (isCCP, msg) => `
+      <div class="card" style="border:2px solid ${isCCP ? '#dc2626' : '#16a34a'};text-align:center">
+        <div style="font-size:34px">${isCCP ? '🛡️' : '✅'}</div>
+        <h3 style="color:${isCCP ? '#dc2626' : '#16a34a'};margin:6px 0">${isCCP ? 'هذه الخطوة نقطة تحكم حرجة (CCP)' : 'هذه الخطوة ليست نقطة تحكم حرجة'}</h3>
+        <p class="muted" style="font-size:13.5px">${msg}</p>
+      </div>
+      <div class="form-actions" style="margin-top:14px">
+        ${isCCP ? `<button class="btn-primary" onclick="Views._dtCreate()">+ إنشاء نقطة تحكم في الخطة</button>` : ''}
+        <button class="btn-secondary" onclick="Views.haccpTree()">إعادة من البداية</button>
+      </div>`;
+    let html = '';
+    if (st.step === 'intro') {
+      html = `<p class="muted" style="margin-bottom:12px">أجب عن الأسئلة لتحديد ما إذا كانت خطوة العملية نقطة تحكم حرجة وفق شجرة قرار Codex.</p>
+        <div class="form-grid two">
+          <div class="field"><label>خطوة العملية</label><input id="dt-step" value="${esc(st.stepName)}" placeholder="مثال: الطهي" /></div>
+          <div class="field"><label>الخطر المحتمل</label><input id="dt-haz" value="${esc(st.hazard)}" placeholder="مثال: بقاء البكتيريا الممرضة" /></div>
+        </div>
+        <div class="form-actions" style="margin-top:12px"><button class="btn-primary" onclick="Views._dtStart()">ابدأ التحليل ←</button></div>`;
+    } else if (st.step === 'q1') {
+      html = Q('س1: هل توجد إجراءات/تدابير وقائية للتحكم في هذا الخطر عند هذه الخطوة؟', 'مثل ضبط الحرارة، التطهير، الفصل، التحكم في الزمن.') + btns('q1yes', 'q1no');
+    } else if (st.step === 'q1no') {
+      html = Q('هل التحكم في هذا الخطر عند هذه الخطوة ضروري للسلامة؟') + btns('modify', 'notccp_q1');
+    } else if (st.step === 'modify') {
+      html = result(false, 'يلزم تعديل الخطوة أو العملية أو المنتج لإدخال تدبير وقائي للتحكم في الخطر. الخطوة بوضعها الحالي ليست CCP لكنها تحتاج معالجة تصميمية.');
+    } else if (st.step === 'notccp_q1') {
+      html = result(false, 'لا حاجة للتحكم عند هذه الخطوة لأغراض السلامة — ليست نقطة تحكم حرجة.');
+    } else if (st.step === 'q2') {
+      html = Q('س2: هل صُمّمت هذه الخطوة تحديدًا لإزالة الخطر أو خفضه إلى مستوى مقبول؟', 'مثل خطوة الطهي المصمّمة للقضاء على الميكروبات.') + btns('isccp_q2', 'q3');
+    } else if (st.step === 'isccp_q2') {
+      html = result(true, 'الخطوة مصمّمة للتحكم في الخطر — إنها نقطة تحكم حرجة (CCP).');
+    } else if (st.step === 'q3') {
+      html = Q('س3: هل يمكن أن يحدث التلوث أو يزداد الخطر إلى مستوى غير مقبول عند هذه الخطوة؟') + btns('q4', 'notccp_q3');
+    } else if (st.step === 'notccp_q3') {
+      html = result(false, 'لا يمكن أن يصل الخطر إلى مستوى غير مقبول هنا — ليست نقطة تحكم حرجة.');
+    } else if (st.step === 'q4') {
+      html = Q('س4: هل ستزيل خطوة لاحقة هذا الخطر أو تخفضه إلى مستوى مقبول؟') + btns('notccp_q4', 'isccp_q4');
+    } else if (st.step === 'notccp_q4') {
+      html = result(false, 'توجد خطوة لاحقة تتحكم في الخطر — هذه الخطوة ليست CCP (لكن الخطوة اللاحقة قد تكون CCP).');
+    } else if (st.step === 'isccp_q4') {
+      html = result(true, 'لا توجد خطوة لاحقة للتحكم في الخطر — هذه الخطوة نقطة تحكم حرجة (CCP).');
+    }
+    b.innerHTML = html;
+  };
+  Views._dtStart = function () {
+    Views._dtState.stepName = (U.$('#dt-step').value || '').trim();
+    Views._dtState.hazard = (U.$('#dt-haz').value || '').trim();
+    if (!Views._dtState.stepName) return U.toast('أدخل خطوة العملية', 'err');
+    Views._dtState.step = 'q1'; Views._dtRender();
+  };
+  Views._dtAns = function (next) {
+    const map = { q1yes: 'q2', q1no: 'q1no' };
+    Views._dtState.step = map[next] || next; Views._dtRender();
+  };
+  Views._dtCreate = function () {
+    const st = Views._dtState;
+    U.closeModal();
+    const last = S.col('haccp').filter(h => h.isCCP).length + 1;
+    Views.editHaccp();
+    setTimeout(() => {
+      const body = U.$('#modal-body'); if (!body) return;
+      const set = (n, v) => { const el = body.querySelector(`[name=${n}]`); if (el) el.value = v; };
+      set('no', 'CCP-' + last); set('step', st.stepName); set('hazard', st.hazard);
+      const cls = body.querySelector('[name=isCCP]'); if (cls) cls.value = 'CCP (نقطة حرجة)';
+    }, 30);
+  };
+
+  /* ===================== تتبّع الدفعات والاستدعاء ===================== */
+  Views._batchStatusBadge = function (s) {
+    const map = { 'في المخزون': 'green', 'قيد الاستخدام': 'blue', 'مستهلك': 'gray', 'مسحوب': 'red' };
+    return U.badge(s, map[s] || 'gray');
+  };
+  Views.traceability = function () {
+    const list = [...S.col('batches')].sort((a, b) => (b.receivedDate || '').localeCompare(a.receivedDate || ''));
+    const m = S.metrics();
+    const rows = list.map(b => {
+      const expSoon = S.daysFromToday(b.expiry) < 0 && b.status !== 'مسحوب' && b.status !== 'مستهلك';
+      return `<tr ${expSoon ? 'style="background:#fef2f2"' : ''}>
+      <td><strong>${esc(b.lotNo)}</strong></td>
+      <td><strong>${esc(b.product)}</strong><br><small class="muted">${esc(b.category)} — ${esc(b.supplier)}</small></td>
+      <td>${b.qty} ${esc(b.unit)}</td>
+      <td>${fmtDate(b.receivedDate)}</td>
+      <td>${fmtDate(b.expiry)} ${U.expiryBadge(b.expiry)}</td>
+      <td>${Views._batchStatusBadge(b.status)}</td>
+      <td class="t-actions">
+        <button class="btn-secondary btn-sm" onclick="Views.recallReport('${b.id}')">📄 تقرير</button>
+        ${b.status !== 'مسحوب' ? `<button class="btn-danger btn-sm" onclick="Views.recallBatch('${b.id}')">استدعاء</button>` : ''}
+        <button class="btn-secondary btn-sm" onclick="Views.editBatch('${b.id}')">تعديل</button>
+        <button class="btn-danger btn-sm" onclick="Views.delBatch('${b.id}')">حذف</button>
+      </td>
+    </tr>`;}).join('');
+    return `
+      <div class="page-head">
+        <div><h2>تتبّع الدفعات وسحب المنتج (Traceability &amp; Recall)</h2><p>ترقيم وتتبّع دفعات المواد من الاستلام حتى التقديم، وتوليد تقرير سحب/استدعاء فوري — وفق ISO 22000 و Codex</p></div>
+        <div class="spacer"></div>
+        <button class="btn-primary" onclick="Views.editBatch()">+ دفعة جديدة</button>
+      </div>
+      <div class="grid cols-3" style="margin-bottom:18px">
+        <div class="card kpi good"><div class="kpi-ic">📦</div><div class="kpi-label">دفعات نشطة</div><div class="kpi-value">${m.activeBatches}</div></div>
+        <div class="card kpi ${m.expiredBatches ? 'bad' : 'good'}"><div class="kpi-ic">⏰</div><div class="kpi-label">منتهية الصلاحية</div><div class="kpi-value">${m.expiredBatches}</div></div>
+        <div class="card kpi ${m.recalledBatches ? 'warn' : 'good'}"><div class="kpi-ic">🚨</div><div class="kpi-label">مسحوبة / مستدعاة</div><div class="kpi-value">${m.recalledBatches}</div></div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>رقم الدفعة</th><th>المنتج / المورد</th><th>الكمية</th><th>الاستلام</th><th>الصلاحية</th><th>الحالة</th><th></th></tr></thead>
+        <tbody>${rows}</tbody></table></div>
+      <p class="muted" style="font-size:12px;margin-top:12px">عند رصد مشكلة سلامة، اضغط «استدعاء» لتسجيل الدفعة كمسحوبة وفتح حالة عدم مطابقة تلقائيًا، ثم «تقرير» لتوليد مستند السحب/الاستدعاء وطباعته.</p>`;
+  };
+
+  Views.editBatch = function (id) {
+    const b = id ? S.get('batches', id) : { lotNo: 'LOT-' + S.todayISO().slice(2).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 4).toUpperCase(), product: '', category: 'لحوم ودواجن', supplier: '', receivedDate: S.todayISO(), qty: 0, unit: 'كجم', expiry: S.shift(7), storage: '', status: 'في المخزون', notes: '' };
+    const sel = (val, opts) => opts.map(o => `<option ${o === val ? 'selected' : ''}>${o}</option>`).join('');
+    const sups = [...new Set(S.col('suppliers').map(s => s.name))];
+    U.modal(id ? 'تعديل دفعة' : 'دفعة جديدة', `
+      <div class="form-grid two">
+        <div class="field"><label>رقم الدفعة (Lot)</label><input name="lotNo" value="${esc(b.lotNo)}" /></div>
+        <div class="field"><label>المنتج</label><input name="product" value="${esc(b.product)}" /></div>
+        <div class="field"><label>الفئة</label><select name="category">${sel(b.category, ['لحوم ودواجن', 'خضار وفواكه', 'ألبان', 'مواد جافة', 'مأكولات بحرية', 'مواد تغليف', 'أخرى'])}</select></div>
+        <div class="field"><label>المورد</label><input name="supplier" value="${esc(b.supplier)}" list="sup-list" /><datalist id="sup-list">${sups.map(s => `<option value="${esc(s)}">`).join('')}</datalist></div>
+        <div class="field"><label>الكمية</label><input name="qty" type="number" min="0" step="any" value="${b.qty}" /></div>
+        <div class="field"><label>الوحدة</label><select name="unit">${sel(b.unit, ['كجم', 'جم', 'لتر', 'مل', 'علبة', 'كرتون', 'حبة'])}</select></div>
+        <div class="field"><label>تاريخ الاستلام</label><input name="receivedDate" type="date" value="${esc(b.receivedDate)}" /></div>
+        <div class="field"><label>تاريخ الانتهاء</label><input name="expiry" type="date" value="${esc(b.expiry)}" /></div>
+        <div class="field"><label>موقع التخزين</label><input name="storage" value="${esc(b.storage)}" /></div>
+        <div class="field"><label>الحالة</label><select name="status">${sel(b.status, ['في المخزون', 'قيد الاستخدام', 'مستهلك', 'مسحوب'])}</select></div>
+        <div class="field field-full"><label>ملاحظات</label><textarea name="notes">${esc(b.notes)}</textarea></div>
+      </div>
+      <div class="form-actions" style="margin-top:14px"><button class="btn-primary" id="save">حفظ</button></div>`,
+      { wide: true, onOpen: (root) => {
+        U.$('#save').onclick = () => {
+          const f = U.readForm(root);
+          if (!f.product) return U.toast('أدخل اسم المنتج', 'err');
+          f.qty = parseFloat(f.qty) || 0;
+          if (id) S.update('batches', id, f); else S.add('batches', f);
+          U.closeModal(); U.toast('تم الحفظ', 'ok'); App.render();
+        };
+      } });
+  };
+
+  Views.delBatch = function (id) {
+    U.confirmDialog('حذف هذه الدفعة؟', () => { S.remove('batches', id); U.toast('تم الحذف', 'ok'); App.render(); }, 'حذف');
+  };
+
+  Views.recallBatch = function (id) {
+    const b = S.get('batches', id); if (!b) return;
+    U.confirmDialog(`تسجيل الدفعة «${b.lotNo}» كمسحوبة وفتح حالة عدم مطابقة؟`, () => {
+      S.update('batches', id, { status: 'مسحوب', recallDate: S.todayISO() });
+      S.add('ncs', {
+        id: S.uid('nc'), title: `سحب/استدعاء الدفعة ${b.lotNo} — ${b.product}`,
+        severity: 'حرجة', source: 'تتبّع الدفعات', status: 'مفتوحة', date: S.todayISO(),
+        owner: (App.user && App.user.name) || 'مدير الجودة', dueDate: S.shift(1),
+        action: `عزل وحجز كامل كمية الدفعة (${b.qty} ${b.unit}) من المورد «${b.supplier}»، وإيقاف استخدامها وإبلاغ الجهات المعنية عند اللزوم`,
+        preventiveAction: 'مراجعة اعتماد المورد وتشديد فحص الاستلام وتتبّع الدفعات الأخرى من نفس المورد',
+        rootCause: '',
+      });
+      U.toast('تم تسجيل السحب وفتح حالة عدم مطابقة', 'ok'); App.render();
+      Views.recallReport(id);
+    }, 'تأكيد السحب');
+  };
+
+  Views.recallReport = function (id) {
+    const b = S.get('batches', id); if (!b) return;
+    const db = S.load();
+    const fac = (db.meta && db.meta.facilityName) || 'المنشأة الغذائية';
+    const reason = b.status === 'مسحوب' ? 'سحب/استدعاء لمشكلة سلامة غذاء' : (S.daysFromToday(b.expiry) < 0 ? 'انتهاء صلاحية' : 'تقرير تتبّع');
+    const row = (k, v) => `<tr><td style="font-weight:600;width:42%;background:#f8fafc">${k}</td><td>${esc(v)}</td></tr>`;
+    U.modal('تقرير تتبّع/سحب الدفعة', `
+      <div id="recall-doc">
+        <div style="text-align:center;border-bottom:2px solid #0f766e;padding-bottom:10px;margin-bottom:14px">
+          <h2 style="margin:0;color:#0f766e">تقرير سحب واستدعاء منتج</h2>
+          <p class="muted" style="margin:4px 0 0">${esc(fac)} — تاريخ التقرير: ${fmtDate(S.todayISO())}</p>
+        </div>
+        <table style="width:100%;border-collapse:collapse" class="report-table">
+          ${row('رقم الدفعة (Lot No.)', b.lotNo)}
+          ${row('المنتج', b.product)}
+          ${row('الفئة', b.category)}
+          ${row('المورد (المصدر)', b.supplier)}
+          ${row('الكمية', b.qty + ' ' + b.unit)}
+          ${row('تاريخ الاستلام', fmtDate(b.receivedDate))}
+          ${row('تاريخ الانتهاء', fmtDate(b.expiry))}
+          ${row('موقع التخزين', b.storage || '—')}
+          ${row('الحالة الحالية', b.status)}
+          ${row('سبب التقرير/السحب', reason)}
+          ${b.notes ? row('ملاحظات', b.notes) : ''}
+        </table>
+        <div class="card" style="background:#fef2f2;border:1px solid #fecaca;margin-top:14px">
+          <strong>الإجراء المطلوب:</strong>
+          <ol style="margin:8px 18px 0;font-size:13.5px;line-height:1.9">
+            <li>عزل وحجز كامل كمية الدفعة فورًا ومنع استخدامها أو تقديمها.</li>
+            <li>تتبّع المنتجات النهائية التي استُخدمت فيها الدفعة وسحبها إن لزم.</li>
+            <li>التواصل مع المورد «${esc(b.supplier)}» وتوثيق المرتجع.</li>
+            <li>إبلاغ الجهة الرقابية (هيئة الغذاء والدواء/البلدية) عند وجود خطر على الصحة العامة.</li>
+            <li>التخلّص الآمن من الكمية غير المطابقة وتوثيق ذلك.</li>
+          </ol>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:24px;font-size:13px">
+          <div>اسم المسؤول: ........................</div>
+          <div>التوقيع: ........................</div>
+          <div>التاريخ: ${fmtDate(S.todayISO())}</div>
+        </div>
+      </div>
+      <div class="form-actions" style="margin-top:16px"><button class="btn-primary" onclick="window.print()">🖨️ طباعة التقرير</button></div>`,
+      { wide: true });
+  };
+
   /* ===================== الموردون ===================== */
   Views.suppliers = function () {
     const db = S.load();
@@ -957,7 +1242,10 @@
     const saved = (db.recipes || []).slice(0, 10);
     const opts = window.Nutrition.INGREDIENTS.map(i => `<option value="${esc(i.name)}">`).join('');
     return `
-      <div class="page-head"><div><h2>حاسبة السعرات والمكوّنات والحساسية</h2><p>أنشئ وصفة من مكوّناتها لحساب السعرات والقيم الغذائية ورصد مسببات الحساسية تلقائيًا</p></div></div>
+      <div class="page-head"><div><h2>حاسبة السعرات والمكوّنات والحساسية</h2><p>أنشئ وصفة من مكوّناتها لحساب السعرات والقيم الغذائية ورصد مسببات الحساسية تلقائيًا</p></div>
+        <div class="spacer"></div>
+        <button class="btn-secondary" onclick="Views.aiEstimateMeal()">🤖 تقدير وجبة بالذكاء الاصطناعي</button>
+      </div>
       <div class="grid cols-2">
         <div class="card">
           <div class="card-title">🍽️ بناء الوصفة</div>
@@ -1044,6 +1332,62 @@
     Views._renderRecipe();
   };
 
+  // تقدير القيمة الغذائية لأي وجبة من وصف نصّي حر بالذكاء الاصطناعي
+  Views._aiMeal = null;
+  Views.aiEstimateMeal = function () {
+    Views._aiMeal = null;
+    U.modal('تقدير وجبة بالذكاء الاصطناعي', `
+      <p class="muted" style="margin-bottom:12px">اكتب وصفًا حرًّا للوجبة أو مكوّناتها، ويقوم النظام بتقدير السعرات والقيم الغذائية ومسببات الحساسية المحتملة — مفيد للأطباق غير الموجودة في قاعدة المكوّنات.</p>
+      <div class="form-grid two">
+        <div class="field field-full"><label>وصف الوجبة</label><textarea id="am-desc" rows="3" placeholder="مثال: طبق كبسة لحم بالأرز مع مكسرات وزبيب وبصل وصلصة طماطم"></textarea></div>
+        <div class="field"><label>عدد الحصص</label><input id="am-serv" type="number" min="1" value="1" /></div>
+      </div>
+      <div class="form-actions" style="margin-top:12px">
+        <button class="btn-primary" id="am-go">🤖 قدّر القيمة الغذائية</button>
+        <span id="am-state" class="muted" style="align-self:center"></span>
+      </div>
+      <div id="am-result" style="margin-top:14px"></div>`,
+      { wide: true, onOpen: (root) => {
+        U.$('#am-go').onclick = async () => {
+          const desc = root.querySelector('#am-desc').value.trim();
+          const serv = parseInt(root.querySelector('#am-serv').value) || 1;
+          if (!desc) return U.toast('اكتب وصف الوجبة', 'err');
+          const st = U.$('#am-state'); st.textContent = '⏳ جارٍ التقدير...';
+          try {
+            const r = await window.AI.estimateNutrition(desc, serv);
+            Views._aiMeal = { desc, serv, r };
+            if (r.needsKey) { st.textContent = ''; U.$('#am-result').innerHTML = `<div class="card" style="background:#fffbeb">${esc(r.hint || '')}</div>`; return; }
+            st.textContent = r.source === 'ai' ? '✓ تقدير بالذكاء الاصطناعي' : '✓ تقدير محلي تقريبي';
+            const p = r.perServing || {};
+            const macro = (lbl, v, u) => `<div><strong>${v}${u}</strong><span>${lbl}</span></div>`;
+            U.$('#am-result').innerHTML = `
+              <div class="donut-wrap" style="margin-bottom:14px">
+                <div class="donut"><svg width="130" height="130" viewBox="0 0 130 130"><circle cx="65" cy="65" r="54" fill="none" stroke="#0f766e" stroke-width="14"/></svg>
+                  <div class="donut-label"><strong>${p.kcal ?? '—'}</strong><span>سعرة/حصة</span></div></div>
+                <div style="flex:1"><div class="inline-stat">
+                  ${macro('بروتين', p.protein ?? '—', 'غ')}${macro('كربوهيدرات', p.carbs ?? '—', 'غ')}${macro('دهون', p.fat ?? '—', 'غ')}
+                </div><p class="muted" style="font-size:12px;margin-top:6px">${esc(r.dish || '')} — لكل حصة (${serv} حصص) · مستوى الثقة: ${esc(r.confidence || 'متوسطة')}</p></div>
+              </div>
+              <div class="card" style="background:#f8fafc;margin-bottom:0">
+                <strong style="font-size:14px">⚠️ مسببات الحساسية المحتملة</strong>
+                <div style="margin-top:8px">${(r.allergens || []).length ? r.allergens.map(a => U.badge(a, 'amber')).join(' ') : '<span class="muted">لم تُرصد مسببات معروفة</span>'}</div>
+                ${r.notes ? `<p class="muted" style="font-size:12px;margin-top:8px">${esc(r.notes)}</p>` : ''}
+                <p class="muted" style="font-size:11px;margin-top:8px">القيم تقديرية — يجب التحقق ميدانيًا والإفصاح عن الحساسية وفق متطلبات الوسم (GSO 2233 / SFDA).</p>
+              </div>
+              <div class="form-actions" style="margin-top:12px"><button class="btn-secondary" id="am-save">💾 حفظ كوجبة مقدّرة</button></div>`;
+            const sv = U.$('#am-save'); if (sv) sv.onclick = () => Views._saveAiMeal();
+          } catch (e) { st.textContent = '⚠ ' + e.message; }
+        };
+      } });
+  };
+  Views._saveAiMeal = function () {
+    const a = Views._aiMeal; if (!a || !a.r || !a.r.perServing) return;
+    const p = a.r.perServing;
+    S.add('recipes', { id: S.uid('rcp'), name: a.r.dish || a.desc.slice(0, 40), servings: a.serv, items: [],
+      totalKcal: Math.round((p.kcal || 0) * a.serv), perKcal: p.kcal || 0, allergens: a.r.allergens || [], aiEstimated: true });
+    U.closeModal(); U.toast('تم حفظ الوجبة المقدّرة', 'ok'); App.render();
+  };
+
   /* ===================== المواصفات والمعايير ===================== */
   Views.standards = function () {
     const regions = ['سعودية', 'خليجية', 'عالمية'];
@@ -1100,6 +1444,8 @@
       ['نسبة امتثال GMP ≥ 85%', m.compliance >= 85],
       ['جدول التنظيف محدّث', m.overdueCleaning === 0],
       ['تم تنفيذ تدقيق داخلي حديث', !!m.lastInsp],
+      ['خطة HACCP موثّقة بنقاط تحكم حرجة', m.ccpCount > 0],
+      ['لا توجد دفعات منتهية الصلاحية في المخزون', m.expiredBatches === 0],
     ];
 
     return `

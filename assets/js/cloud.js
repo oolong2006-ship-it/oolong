@@ -12,6 +12,7 @@
     employees: 'employees', tempLogs: 'temp_logs', inspections: 'inspections',
     ncs: 'ncs', suppliers: 'suppliers', pest: 'pest_visits',
     cleaning: 'cleaning_tasks', monitors: 'monitors',
+    haccp: 'haccp', batches: 'batches', recipes: 'recipes', workerChecks: 'worker_checks',
   };
   const COLLECTIONS = Object.keys(TABLES);
 

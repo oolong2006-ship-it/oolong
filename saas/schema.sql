@@ -42,7 +42,8 @@ declare t text;
 begin
   foreach t in array array[
     'employees','temp_logs','inspections','ncs',
-    'suppliers','pest_visits','cleaning_tasks','monitors'
+    'suppliers','pest_visits','cleaning_tasks','monitors',
+    'haccp','batches','recipes','worker_checks'
   ] loop
     execute format($f$
       create table if not exists public.%I (
@@ -82,7 +83,8 @@ declare t text;
 begin
   foreach t in array array[
     'employees','temp_logs','inspections','ncs',
-    'suppliers','pest_visits','cleaning_tasks','monitors'
+    'suppliers','pest_visits','cleaning_tasks','monitors',
+    'haccp','batches','recipes','worker_checks'
   ] loop
     execute format('alter table public.%I enable row level security;', t);
     execute format('drop policy if exists tenant_all on public.%I;', t);

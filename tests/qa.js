@@ -117,7 +117,7 @@ const { chromium } = require('playwright');
   ok('[واجهة] تسجيل الدخول يعرض التطبيق', await page.isVisible('#app'));
 
   // كل المسارات تُعرض دون خطأ ومحتوى غير فارغ
-  const routes = ['dashboard','inspections','monitor','temperature','employees','nc','suppliers','cleaning','standards','reports','settings'];
+  const routes = ['dashboard','inspections','haccp','monitor','temperature','employees','nc','traceability','suppliers','cleaning','nutrition','standards','reports','settings'];
   for (const k of routes) {
     await page.click(`.nav-item[data-key="${k}"]`);
     await page.waitForTimeout(250);
@@ -207,6 +207,30 @@ const { chromium } = require('playwright');
     return window.Store.load().meta.facilityName;
   });
   ok('[تدفق] تصدير/استيراد JSON يعمل', io === 'مستورد QA', io);
+
+  // تدفق: خطة HACCP — وجود نقاط تحكم حرجة في البيانات والمؤشرات
+  const ccp = await page.evaluate(() => ({ rows: window.Store.col('haccp').length, ccps: window.Store.metrics().ccpCount }));
+  ok('[تدفق] HACCP: نقاط تحكم محمّلة', ccp.rows >= 4 && ccp.ccps >= 3, JSON.stringify(ccp));
+
+  // تدفق: تتبّع الدفعات — استدعاء دفعة يحوّل حالتها ويفتح حالة عدم مطابقة
+  const recall = await page.evaluate(() => {
+    const b = window.Store.col('batches')[0];
+    const ncBefore = window.Store.col('ncs').length;
+    window.Views.recallBatch(b.id);
+    document.querySelector('#cf-yes').click();
+    return { status: window.Store.get('batches', b.id).status, ncAdded: window.Store.col('ncs').length - ncBefore };
+  });
+  await page.waitForTimeout(150);
+  ok('[تدفق] الاستدعاء: الدفعة أصبحت مسحوبة', recall.status === 'مسحوب', recall.status);
+  ok('[تدفق] الاستدعاء: فُتحت حالة عدم مطابقة', recall.ncAdded === 1, 'added=' + recall.ncAdded);
+  await page.evaluate(() => window.UI.closeModal());
+
+  // تدفق: تقدير وجبة بالذكاء الاصطناعي (محرك محلي يطابق مكوّنًا معروفًا)
+  const est = await page.evaluate(async () => {
+    const r = await window.AI.estimateNutrition('طبق أرز أبيض مطبوخ مع صدر دجاج مطبوخ', 2);
+    return { kcal: r.perServing && r.perServing.kcal, source: r.source };
+  });
+  ok('[AI] تقدير الوجبة المحلي يعطي سعرات', est.kcal > 0, JSON.stringify(est));
 
   // إعادة الضبط النهائية حتى لا تتلوث بيانات العرض
   await page.evaluate(() => window.Store.reset());

@@ -203,5 +203,44 @@ ${WORKER_CRITERIA.map((c, i) => (i + 1) + '. ' + c).join('\n')}
     };
   }
 
-  window.AI = { cfg, setCfg, hasKey, enabled, MODEL, generateCapa, evaluateItem, analyzePhoto, inspectWorker, WORKER_CRITERIA };
+  /* ============ 5) تقدير القيمة الغذائية لوجبة من وصف نصّي ============ */
+  // description: نص حر يصف الوجبة/المكوّنات؛ servings: عدد الحصص
+  async function estimateNutrition(description, servings) {
+    const s = Math.max(1, parseInt(servings) || 1);
+    if (enabled()) {
+      try {
+        const text = await callClaude(
+          `قدّر القيمة الغذائية للوجبة التالية بناءً على خبرتك ومتوسط القيم الغذائية المعروفة: "${description}".
+الوجبة مقسّمة على ${s} حصة/حصص. قدّر القيم لكل حصة واحدة.
+أعِد JSON فقط بالشكل:
+{"dish":"اسم مختصر للوجبة","perServing":{"kcal":رقم,"protein":رقم بالغرام,"carbs":رقم بالغرام,"fat":رقم بالغرام},"allergens":["قائمة مسببات الحساسية المحتملة من: ألبان، بيض، جلوتين، مكسرات، فول سوداني، سمسم، صويا، أسماك، قشريات، خردل"],"confidence":"عالية|متوسطة|منخفضة","notes":"ملاحظة موجزة عن أساس التقدير ودقته"}
+كن واقعيًا في التقدير واذكر أنه تقديري.`,
+          { maxTokens: 900 }
+        );
+        const j = parseJSON(text);
+        if (j && j.perServing) return { ...j, servings: s, source: 'ai' };
+      } catch (e) { /* تجاوز للمحرك المحلي */ }
+    }
+    // محرك احتياطي محلي: مطابقة المكوّنات المعروفة من النص لتقدير تقريبي
+    if (window.Nutrition) {
+      const found = [];
+      window.Nutrition.INGREDIENTS.forEach(ing => { if (description && description.includes(ing.name)) found.push(ing); });
+      if (found.length) {
+        const t = found.reduce((a, ing) => ({ kcal: a.kcal + ing.kcal, p: a.p + ing.p, c: a.c + ing.c, f: a.f + ing.f }), { kcal: 0, p: 0, c: 0, f: 0 });
+        const allergens = [...new Set(found.flatMap(i => i.a || []))];
+        // افتراض حصة ~200غ لكل مكوّن مذكور، موزّعة على الحصص
+        const factor = (2) / s;
+        return {
+          dish: 'تقدير محلي', servings: s,
+          perServing: { kcal: Math.round(t.kcal * factor), protein: +(t.p * factor).toFixed(1), carbs: +(t.c * factor).toFixed(1), fat: +(t.f * factor).toFixed(1) },
+          allergens, confidence: 'منخفضة',
+          notes: 'تقدير تقريبي محلي مبني على مطابقة المكوّنات المعروفة (افتراض ~200غ لكل مكوّن). فعّل خدمة الذكاء الاصطناعي للحصول على تقدير أدق لأي وجبة.',
+          source: 'local',
+        };
+      }
+    }
+    return { needsKey: true, source: 'local', hint: 'تقدير وجبة من وصف نصّي حر يتطلب تفعيل خدمة الذكاء الاصطناعي من الإعدادات، أو ذكر مكوّنات معروفة في الوصف.' };
+  }
+
+  window.AI = { cfg, setCfg, hasKey, enabled, MODEL, generateCapa, evaluateItem, analyzePhoto, inspectWorker, estimateNutrition, WORKER_CRITERIA };
 })();
