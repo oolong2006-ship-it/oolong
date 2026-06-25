@@ -1,8 +1,9 @@
 name: Deploy Waleef to Vercel
 
 # ينشر تطبيق وليف (مجلد waleef/) تلقائيًا على Vercel.
-# يحتاج إضافة 3 أسرار في المستودع: VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID
-# لو الأسرار غير موجودة، تتخطى المهمة بهدوء وتبقى الـ CI خضراء.
+# يحتاج سرًّا واحدًا فقط في المستودع: VERCEL_TOKEN
+# (Vercel ينشئ المشروع تلقائيًا عند أول نشر.)
+# لو السر غير موجود، تتخطى المهمة بهدوء وتبقى الـ CI خضراء.
 
 on:
   push:
@@ -15,8 +16,6 @@ on:
 
 env:
   VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
 jobs:
   deploy:
@@ -25,10 +24,10 @@ jobs:
       run:
         working-directory: waleef
     steps:
-      - name: Notice when secrets are missing
+      - name: Notice when the token is missing
         if: ${{ env.VERCEL_TOKEN == '' }}
         run: |
-          echo "::notice title=Vercel not configured::أضف الأسرار VERCEL_TOKEN و VERCEL_ORG_ID و VERCEL_PROJECT_ID لتفعيل النشر. تم تخطّي هذه المهمة."
+          echo "::notice title=Vercel not configured::أضف السر VERCEL_TOKEN في إعدادات المستودع لتفعيل النشر التلقائي. تم تخطّي هذه المهمة."
 
       - name: Checkout
         if: ${{ env.VERCEL_TOKEN != '' }}
@@ -44,17 +43,11 @@ jobs:
         if: ${{ env.VERCEL_TOKEN != '' }}
         run: npm install -g vercel@latest
 
-      - name: Pull Vercel environment
-        if: ${{ env.VERCEL_TOKEN != '' }}
-        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
-
-      - name: Build
-        if: ${{ env.VERCEL_TOKEN != '' }}
-        run: vercel build --prod --token="$VERCEL_TOKEN"
-
-      - name: Deploy to production
+      - name: Deploy to Vercel (production)
         if: ${{ env.VERCEL_TOKEN != '' }}
         run: |
-          url=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+          url=$(vercel deploy --prod --yes --cwd . --token="$VERCEL_TOKEN")
           echo "Deployed to: $url"
-          echo "### 🌿 وليف منشور: $url" >> "$GITHUB_STEP_SUMMARY"
+          echo "### 🌿 وليف منشور بنجاح" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**رابط التطبيق:** $url" >> "$GITHUB_STEP_SUMMARY"

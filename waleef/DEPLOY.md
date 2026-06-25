@@ -24,27 +24,27 @@
 
 ## الطريقة (2): نشر تلقائي عبر GitHub Actions 🤖
 
-جاهزة في `/.github/workflows/deploy-waleef.yml`. تنشر تلقائيًا عند كل دفعة تلمس مجلد
-`waleef/`. كل اللي تحتاجه إضافة **3 أسرار** في المستودع:
+جاهزة في `/.github/workflows/deploy-waleef.yml`. تنشر تلقائيًا عند كل دفعة تلمس
+مجلد `waleef/`. كل اللي تحتاجه إضافة **سر واحد فقط** في المستودع:
 
 `Settings → Secrets and variables → Actions → New repository secret`
 
-| الاسم | من وين تجيبه |
+| الاسم | القيمة |
 |---|---|
-| `VERCEL_TOKEN` | [vercel.com/account/tokens](https://vercel.com/account/tokens) → Create Token |
-| `VERCEL_ORG_ID` | من ملف `.vercel/project.json` بعد `vercel link`، أو من إعدادات المشروع في Vercel |
-| `VERCEL_PROJECT_ID` | نفس المصدر السابق |
+| `VERCEL_TOKEN` | توكن من [vercel.com/account/tokens](https://vercel.com/account/tokens) ← اضغط **Create Token** وانسخه |
 
-لاستخراج `ORG_ID` و `PROJECT_ID` بسرعة من جهازك:
+> Vercel ينشئ المشروع تلقائيًا عند أول نشر، فما تحتاج `ORG_ID` ولا `PROJECT_ID`.
 
-```bash
-cd waleef
-npx vercel link        # يربط المجلد بمشروع Vercel وينشئ .vercel/project.json
-cat .vercel/project.json   # فيه orgId و projectId
-```
+**الخطوات:**
+1. سجّل دخول [vercel.com](https://vercel.com) بحساب GitHub.
+2. روح [vercel.com/account/tokens](https://vercel.com/account/tokens) → **Create Token** → انسخ القيمة.
+3. في المستودع: `Settings → Secrets and variables → Actions → New repository secret`
+   - الاسم: `VERCEL_TOKEN`
+   - القيمة: التوكن اللي نسخته
+4. روح تبويب **Actions → Deploy Waleef to Vercel → Run workflow** (أو ادفع أي تغيير).
+5. بعد ما يخلص، رابط التطبيق يظهر في ملخص التشغيل (Summary) أعلى الصفحة.
 
-> ملاحظة: قبل إضافة الأسرار، تتخطّى المهمة نفسها بهدوء وتبقى الـ CI خضراء — ما تفشل.
-> بعد إضافتها، ادفع أي تغيير أو شغّلها يدويًا من تبويب **Actions → Run workflow**.
+> ملاحظة: قبل إضافة السر، تتخطّى المهمة نفسها بهدوء وتبقى الـ CI خضراء — ما تفشل.
 
 ---
 
