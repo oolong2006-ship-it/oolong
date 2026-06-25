@@ -949,6 +949,101 @@
     U.toast('تم إنشاء حالة عدم مطابقة مرفقة بالدليل المصوّر', 'ok'); App.buildNav();
   };
 
+  /* ===================== حاسبة السعرات والمكوّنات والحساسية ===================== */
+  Views._recipe = []; // [{name, grams}]
+
+  Views.nutrition = function () {
+    const db = S.load();
+    const saved = (db.recipes || []).slice(0, 10);
+    const opts = window.Nutrition.INGREDIENTS.map(i => `<option value="${esc(i.name)}">`).join('');
+    return `
+      <div class="page-head"><div><h2>حاسبة السعرات والمكوّنات والحساسية</h2><p>أنشئ وصفة من مكوّناتها لحساب السعرات والقيم الغذائية ورصد مسببات الحساسية تلقائيًا</p></div></div>
+      <div class="grid cols-2">
+        <div class="card">
+          <div class="card-title">🍽️ بناء الوصفة</div>
+          <div class="form-grid two" style="margin-bottom:10px">
+            <div class="field field-full"><label>اسم الوصفة</label><input id="rc-name" placeholder="مثال: برياني دجاج" /></div>
+            <div class="field"><label>المكوّن</label><input id="rc-ing" list="rc-ings" placeholder="ابحث أو اختر" /><datalist id="rc-ings">${opts}</datalist></div>
+            <div class="field"><label>الكمية (غرام)</label><input id="rc-g" type="number" min="0" step="10" placeholder="150" /></div>
+          </div>
+          <button class="btn-secondary" id="rc-add" style="width:100%;margin-bottom:12px">+ إضافة المكوّن</button>
+          <div id="rc-list"></div>
+          <div class="field" style="margin-top:10px"><label>عدد الحصص (Servings)</label><input id="rc-serv" type="number" min="1" value="1" /></div>
+          <div class="form-actions" style="margin-top:6px"><button class="btn-primary" id="rc-save">حفظ الوصفة</button><button class="btn-secondary" id="rc-clear">تفريغ</button></div>
+        </div>
+        <div class="card">
+          <div class="card-title">📊 القيمة الغذائية</div>
+          <div id="rc-result">${U.empty('أضِف مكوّنات لعرض السعرات والحساسية', '🥗')}</div>
+        </div>
+      </div>
+      ${saved.length ? `<div class="card section-gap">
+        <div class="card-title">📒 الوصفات المحفوظة</div>
+        <div class="table-wrap" style="border:none"><table>
+          <thead><tr><th>الوصفة</th><th>الحصص</th><th>سعرات/حصة</th><th>الحساسية</th><th></th></tr></thead>
+          <tbody>${saved.map(r => `<tr>
+            <td><strong>${esc(r.name)}</strong></td><td>${r.servings}</td><td>${r.perKcal} kcal</td>
+            <td>${(r.allergens || []).length ? r.allergens.map(a => U.badge(a, 'amber')).join(' ') : '<span class="muted">—</span>'}</td>
+            <td class="t-actions"><button class="btn-danger btn-sm" onclick="Views.delRecipe('${r.id}')">حذف</button></td>
+          </tr>`).join('')}</tbody></table></div>
+      </div>` : ''}`;
+  };
+
+  Views._renderRecipe = function () {
+    const list = U.$('#rc-list'), res = U.$('#rc-result'); if (!list) return;
+    if (!Views._recipe.length) { list.innerHTML = '<p class="muted" style="font-size:13px">لا مكوّنات بعد.</p>'; res.innerHTML = U.empty('أضِف مكوّنات لعرض السعرات والحساسية', '🥗'); return; }
+    const servings = parseInt((U.$('#rc-serv') || {}).value) || 1;
+    const r = window.Nutrition.compute(Views._recipe, servings);
+    list.innerHTML = `<div class="list-tight">${r.rows.map((row, i) => `
+      <div class="row-line"><div style="flex:1"><strong>${esc(row.name)}</strong> <small class="muted">${row.grams}غ</small></div>
+        <span class="muted">${row.kcal} kcal</span>
+        <button class="btn-danger btn-sm" onclick="Views.rcRemove(${i})">✕</button></div>`).join('')}</div>`;
+    const macro = (lbl, v, unit) => `<div><strong>${v}${unit}</strong><span>${lbl}</span></div>`;
+    res.innerHTML = `
+      <div class="donut-wrap" style="margin-bottom:14px">
+        <div class="donut"><svg width="130" height="130" viewBox="0 0 130 130"><circle cx="65" cy="65" r="54" fill="none" stroke="#0f766e" stroke-width="14"/></svg>
+          <div class="donut-label"><strong>${r.per.kcal}</strong><span>سعرة/حصة</span></div></div>
+        <div style="flex:1"><div class="inline-stat">
+          ${macro('بروتين', r.per.p, 'غ')}${macro('كربوهيدرات', r.per.c, 'غ')}${macro('دهون', r.per.f, 'غ')}
+        </div><p class="muted" style="font-size:12px;margin-top:6px">القيم لكل حصة (${servings} حصص، الإجمالي ${r.total.kcal} kcal)</p></div>
+      </div>
+      <div class="card" style="background:#f8fafc;margin-bottom:0">
+        <strong style="font-size:14px">⚠️ مسببات الحساسية</strong>
+        <div style="margin-top:8px">${r.allergens.length ? r.allergens.map(a => U.badge(a, 'amber')).join(' ') : '<span class="muted">لا توجد مسببات معروفة من المكوّنات المختارة</span>'}</div>
+        <p class="muted" style="font-size:11px;margin-top:8px">يجب التحقق ميدانيًا والإفصاح عن الحساسية وفق متطلبات الوسم (GSO 2233 / SFDA).</p>
+      </div>
+      <div class="form-actions" style="margin-top:12px"><button class="btn-secondary btn-sm" onclick="window.print()">🖨️ طباعة بطاقة القيمة الغذائية</button></div>`;
+  };
+
+  Views.rcRemove = function (i) { Views._recipe.splice(i, 1); Views._renderRecipe(); };
+  Views.delRecipe = function (id) { S.remove('recipes', id); U.toast('تم الحذف', 'ok'); App.render(); };
+
+  Views.bind_nutrition = function () {
+    Views._recipe = [];
+    const ingEl = U.$('#rc-ing'), gEl = U.$('#rc-g'), addBtn = U.$('#rc-add'), servEl = U.$('#rc-serv');
+    if (!addBtn) return;
+    addBtn.onclick = () => {
+      const name = ingEl.value.trim(), g = parseFloat(gEl.value);
+      if (!name || !window.Nutrition.find(name)) return U.toast('اختر مكوّنًا من القائمة', 'err');
+      if (!g || g <= 0) return U.toast('أدخل كمية صحيحة', 'err');
+      Views._recipe.push({ name, grams: g });
+      ingEl.value = ''; gEl.value = ''; ingEl.focus();
+      Views._renderRecipe();
+    };
+    if (servEl) servEl.oninput = () => Views._renderRecipe();
+    U.$('#rc-clear').onclick = () => { Views._recipe = []; U.$('#rc-name').value = ''; Views._renderRecipe(); };
+    U.$('#rc-save').onclick = () => {
+      const name = U.$('#rc-name').value.trim();
+      if (!name) return U.toast('أدخل اسم الوصفة', 'err');
+      if (!Views._recipe.length) return U.toast('أضِف مكوّنات أولًا', 'err');
+      const servings = parseInt(servEl.value) || 1;
+      const r = window.Nutrition.compute(Views._recipe, servings);
+      S.add('recipes', { id: S.uid('rcp'), name, servings, items: Views._recipe.slice(),
+        totalKcal: r.total.kcal, perKcal: r.per.kcal, allergens: r.allergens });
+      U.toast('تم حفظ الوصفة', 'ok'); App.render();
+    };
+    Views._renderRecipe();
+  };
+
   /* ===================== المواصفات والمعايير ===================== */
   Views.standards = function () {
     const regions = ['سعودية', 'خليجية', 'عالمية'];
