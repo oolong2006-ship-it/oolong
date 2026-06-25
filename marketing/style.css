@@ -81,6 +81,8 @@ img { max-width: 100%; display: block; }
 .section-head .section-sub { margin: 0 auto; }
 .split { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
 .split.center { align-items: center; }
+.whatsnew-row { margin-top: 56px; }
+.whatsnew-row .pill { margin-bottom: 14px; }
 
 /* قوائm */
 .check-list { list-style: none; margin-top: 18px; display: grid; gap: 12px; }
