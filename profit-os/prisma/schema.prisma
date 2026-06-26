@@ -1,0 +1,1351 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum UserRole {
+  SUPER_ADMIN
+  OWNER
+  CEO
+  CFO
+  PROCUREMENT_MANAGER
+  OPERATIONS_MANAGER
+  WAREHOUSE_MANAGER
+  BRANCH_MANAGER
+  QUALITY_MANAGER
+  ACCOUNTANT
+  AUDITOR
+  VIEWER
+}
+
+enum BranchType {
+  DINE_IN
+  TAKEAWAY
+  DELIVERY
+  CLOUD_KITCHEN
+  CENTRAL_KITCHEN
+}
+
+enum StockMovementType {
+  PURCHASE_RECEIPT
+  TRANSFER_IN
+  TRANSFER_OUT
+  PRODUCTION_ISSUE
+  BRANCH_ISSUE
+  SALES_CONSUMPTION
+  WASTE
+  RETURN_TO_SUPPLIER
+  ADJUSTMENT
+  COUNT_VARIANCE
+}
+
+enum AlertSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AlertType {
+  FINANCIAL
+  PROCUREMENT
+  INVENTORY
+  SUPPLIER
+  WASTE
+  DELIVERY
+  MENU
+  BRANCH
+  QUALITY
+  SYSTEM
+}
+
+enum RecommendationStatus {
+  NEW
+  ACCEPTED
+  REJECTED
+  IN_PROGRESS
+  COMPLETED
+  DISMISSED
+}
+
+enum UploadType {
+  POS_SALES
+  DELIVERY_SETTLEMENT
+  PURCHASE_INVOICE
+  SUPPLIER_PRICE_LIST
+  INVENTORY_COUNT
+  STOCK_MOVEMENT
+  WASTE_REPORT
+  RECIPE_COST_SHEET
+  BRANCH_EXPENSE
+  PROMOTION_REPORT
+}
+
+enum UploadStatus {
+  PENDING
+  PROCESSING
+  MAPPED
+  VALIDATED
+  IMPORTED
+  FAILED
+}
+
+enum MenuEngineeringClass {
+  STAR
+  PLOWHORSE
+  PUZZLE
+  DOG
+}
+
+enum WasteReason {
+  EXPIRED
+  SPOILED
+  OVERPRODUCTION
+  WRONG_PREPARATION
+  CUSTOMER_RETURN
+  DELIVERY_DAMAGE
+  RECEIVING_REJECTION
+  STORAGE_ISSUE
+  PORTIONING_ISSUE
+  OTHER
+}
+
+// ============================================================
+// CORE TENANCY
+// ============================================================
+
+model Organization {
+  id              String   @id @default(cuid())
+  name            String
+  nameAr          String?
+  slug            String   @unique
+  logoUrl         String?
+  country         String   @default("SA")
+  currency        String   @default("SAR")
+  vatRate         Float    @default(0.15)
+  vatEnabled      Boolean  @default(true)
+  timezone        String   @default("Asia/Riyadh")
+  language        String   @default("ar")
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  memberships           Membership[]
+  restaurantBrands      RestaurantBrand[]
+  branches              Branch[]
+  warehouses            Warehouse[]
+  costCenters           CostCenter[]
+  suppliers             Supplier[]
+  purchaseCategories    PurchaseCategory[]
+  inventoryItems        InventoryItem[]
+  unitsOfMeasure        UnitOfMeasure[]
+  menuCategories        MenuCategory[]
+  menuItems             MenuItem[]
+  salesChannels         SalesChannel[]
+  deliveryPlatforms     DeliveryPlatform[]
+  salesRecords          SalesRecord[]
+  deliverySettlements   DeliverySettlement[]
+  purchaseInvoices      PurchaseInvoice[]
+  wasteRecords          WasteRecord[]
+  stockMovements        StockMovement[]
+  stockCounts           StockCount[]
+  stockTransfers        StockTransfer[]
+  uploadBatches         UploadBatch[]
+  alerts                Alert[]
+  recommendations       Recommendation[]
+  auditLogs             AuditLog[]
+  appSettings           AppSetting[]
+  supplierScorecards    SupplierScorecard[]
+  promotions            Promotion[]
+  qualityIssues         QualityIssue[]
+  budgetTargets         BudgetTarget[]
+
+  @@index([slug])
+}
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  emailVerified   DateTime?
+  name            String?
+  nameAr          String?
+  image           String?
+  hashedPassword  String?
+  isActive        Boolean  @default(true)
+  isSuperAdmin    Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  memberships     Membership[]
+  auditLogs       AuditLog[]
+  sessions        Session[]
+  accounts        Account[]
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Membership {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  role           UserRole
+  branchId       String?
+  isActive       Boolean  @default(true)
+  invitedAt      DateTime @default(now())
+  joinedAt       DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branch         Branch?      @relation(fields: [branchId], references: [id])
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+}
+
+// ============================================================
+// RESTAURANT STRUCTURE
+// ============================================================
+
+model RestaurantBrand {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  nameAr         String?
+  logoUrl        String?
+  description    String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branches       Branch[]
+
+  @@index([organizationId])
+}
+
+model Branch {
+  id                  String     @id @default(cuid())
+  organizationId      String
+  brandId             String?
+  code                String
+  name                String
+  nameAr              String?
+  branchType          BranchType @default(DINE_IN)
+  city                String?
+  district            String?
+  address             String?
+  managerName         String?
+  phone               String?
+  openingDate         DateTime?
+  isActive            Boolean    @default(true)
+  targetMonthlySales  Float?
+  targetFoodCostPct   Float?
+  targetLaborCostPct  Float?
+  targetWastePct      Float?
+  rentCost            Float?
+  fixedMonthlyCost    Float?
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  organization          Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  brand                 RestaurantBrand?      @relation(fields: [brandId], references: [id])
+  memberships           Membership[]
+  salesRecords          SalesRecord[]
+  deliverySettlements   DeliverySettlement[]
+  wasteRecords          WasteRecord[]
+  stockMovements        StockMovement[]
+  stockCounts           StockCount[]
+  branchStock           BranchStock[]
+  profitabilitySnapshots BranchProfitabilitySnapshot[]
+  qualityIssues         QualityIssue[]
+  budgetTargets         BudgetTarget[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+}
+
+model Warehouse {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  nameAr         String?
+  code           String
+  address        String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  stockMovements StockMovement[]
+  stockCounts    StockCount[]
+  warehouseStock WarehouseStock[]
+  stockTransfersFrom StockTransfer[] @relation("TransferFrom")
+  stockTransfersTo   StockTransfer[] @relation("TransferTo")
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+}
+
+model CostCenter {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  nameAr         String?
+  code           String
+  description    String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+}
+
+// ============================================================
+// SUPPLIERS & PROCUREMENT
+// ============================================================
+
+model SupplierCategory {
+  id             String   @id @default(cuid())
+  name           String
+  nameAr         String?
+  description    String?
+  suppliers      Supplier[]
+}
+
+model Supplier {
+  id                  String   @id @default(cuid())
+  organizationId      String
+  code                String
+  name                String
+  nameAr              String?
+  categoryId          String?
+  contactName         String?
+  phone               String?
+  email               String?
+  address             String?
+  vatNumber           String?
+  paymentTermDays     Int?
+  creditLimit         Float?
+  isApproved          Boolean  @default(true)
+  isActive            Boolean  @default(true)
+  notes               String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  organization        Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  category            SupplierCategory?  @relation(fields: [categoryId], references: [id])
+  contacts            SupplierContact[]
+  contracts           SupplierContract[]
+  priceLists          SupplierPriceList[]
+  purchaseInvoices    PurchaseInvoice[]
+  supplierReturns     SupplierReturn[]
+  qualityIssues       QualityIssue[]
+  scorecards          SupplierScorecard[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+}
+
+model SupplierContact {
+  id          String   @id @default(cuid())
+  supplierId  String
+  name        String
+  role        String?
+  phone       String?
+  email       String?
+  isPrimary   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  supplier    Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+}
+
+model SupplierContract {
+  id             String   @id @default(cuid())
+  supplierId     String
+  organizationId String
+  contractNumber String
+  startDate      DateTime
+  endDate        DateTime
+  description    String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  supplier       Supplier              @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  contractItems  ContractItem[]
+
+  @@index([supplierId])
+  @@index([organizationId])
+}
+
+model ContractItem {
+  id              String   @id @default(cuid())
+  contractId      String
+  inventoryItemId String
+  agreedUnitPrice Float
+  unit            String
+  minQuantity     Float?
+  maxQuantity     Float?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  contract        SupplierContract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  inventoryItem   InventoryItem    @relation(fields: [inventoryItemId], references: [id])
+
+  @@index([contractId])
+}
+
+model SupplierPriceList {
+  id             String   @id @default(cuid())
+  supplierId     String
+  organizationId String
+  name           String
+  effectiveDate  DateTime
+  expiryDate     DateTime?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  supplier       Supplier              @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  items          SupplierPriceItem[]
+
+  @@index([supplierId])
+  @@index([organizationId])
+}
+
+model SupplierPriceItem {
+  id              String   @id @default(cuid())
+  priceListId     String
+  inventoryItemId String
+  unitPrice       Float
+  unit            String
+  minQuantity     Float?
+  createdAt       DateTime @default(now())
+
+  priceList       SupplierPriceList @relation(fields: [priceListId], references: [id], onDelete: Cascade)
+  inventoryItem   InventoryItem     @relation(fields: [inventoryItemId], references: [id])
+}
+
+model PurchaseCategory {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  nameAr         String?
+  budget         Float?
+  createdAt      DateTime @default(now())
+
+  organization         Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  purchaseInvoiceItems PurchaseInvoiceItem[]
+
+  @@index([organizationId])
+}
+
+model PurchaseInvoice {
+  id               String   @id @default(cuid())
+  organizationId   String
+  supplierId       String
+  branchId         String?
+  warehouseId      String?
+  invoiceNumber    String
+  invoiceDate      DateTime
+  receivedDate     DateTime?
+  subtotal         Float
+  vatAmount        Float    @default(0)
+  totalAmount      Float
+  paidAmount       Float    @default(0)
+  isDuplicate      Boolean  @default(false)
+  uploadBatchId    String?
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  organization     Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  supplier         Supplier              @relation(fields: [supplierId], references: [id])
+  uploadBatch      UploadBatch?          @relation(fields: [uploadBatchId], references: [id])
+  items            PurchaseInvoiceItem[]
+  supplierReturns  SupplierReturn[]
+
+  @@unique([organizationId, supplierId, invoiceNumber])
+  @@index([organizationId])
+  @@index([supplierId])
+  @@index([invoiceDate])
+  @@index([uploadBatchId])
+}
+
+model PurchaseInvoiceItem {
+  id               String   @id @default(cuid())
+  invoiceId        String
+  inventoryItemId  String?
+  categoryId       String?
+  itemName         String
+  itemCode         String?
+  unit             String
+  quantity         Float
+  unitPrice        Float
+  totalBeforeVat   Float
+  vatAmount        Float    @default(0)
+  totalAfterVat    Float
+  createdAt        DateTime @default(now())
+
+  invoice          PurchaseInvoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  inventoryItem    InventoryItem?    @relation(fields: [inventoryItemId], references: [id])
+  category         PurchaseCategory? @relation(fields: [categoryId], references: [id])
+
+  @@index([invoiceId])
+  @@index([inventoryItemId])
+}
+
+// ============================================================
+// INVENTORY
+// ============================================================
+
+model UnitOfMeasure {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  nameAr         String?
+  abbreviation   String
+  isBaseUnit     Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  inventoryItems  InventoryItem[]
+  conversionsFrom UnitConversion[] @relation("ConversionFrom")
+  conversionsTo   UnitConversion[] @relation("ConversionTo")
+
+  @@index([organizationId])
+}
+
+model UnitConversion {
+  id           String   @id @default(cuid())
+  fromUnitId   String
+  toUnitId     String
+  factor       Float
+  createdAt    DateTime @default(now())
+
+  fromUnit     UnitOfMeasure @relation("ConversionFrom", fields: [fromUnitId], references: [id])
+  toUnit       UnitOfMeasure @relation("ConversionTo", fields: [toUnitId], references: [id])
+
+  @@unique([fromUnitId, toUnitId])
+}
+
+model InventoryItem {
+  id                  String   @id @default(cuid())
+  organizationId      String
+  sku                 String
+  name                String
+  nameAr              String?
+  description         String?
+  unitId              String?
+  categoryId          String?
+  reorderPoint        Float?
+  minStock            Float?
+  maxStock            Float?
+  currentAverageCost  Float?
+  lastPurchasePrice   Float?
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  organization         Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  unit                 UnitOfMeasure?        @relation(fields: [unitId], references: [id])
+  purchaseInvoiceItems PurchaseInvoiceItem[]
+  recipeIngredients    RecipeIngredient[]
+  stockMovements       StockMovement[]
+  warehouseStock       WarehouseStock[]
+  branchStock          BranchStock[]
+  supplierPriceItems   SupplierPriceItem[]
+  contractItems        ContractItem[]
+  wasteRecords         WasteRecord[]
+  stockCountItems      StockCountItem[]
+
+  @@unique([organizationId, sku])
+  @@index([organizationId])
+}
+
+model WarehouseStock {
+  id              String   @id @default(cuid())
+  warehouseId     String
+  inventoryItemId String
+  quantity        Float    @default(0)
+  averageCost     Float?
+  lastUpdated     DateTime @updatedAt
+
+  warehouse       Warehouse     @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+
+  @@unique([warehouseId, inventoryItemId])
+  @@index([warehouseId])
+  @@index([inventoryItemId])
+}
+
+model BranchStock {
+  id              String   @id @default(cuid())
+  branchId        String
+  inventoryItemId String
+  quantity        Float    @default(0)
+  averageCost     Float?
+  lastUpdated     DateTime @updatedAt
+
+  branch          Branch        @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+
+  @@unique([branchId, inventoryItemId])
+  @@index([branchId])
+  @@index([inventoryItemId])
+}
+
+model StockMovement {
+  id              String            @id @default(cuid())
+  organizationId  String
+  inventoryItemId String
+  branchId        String?
+  warehouseId     String?
+  movementType    StockMovementType
+  quantity        Float
+  unitCost        Float?
+  totalCost       Float?
+  referenceId     String?
+  referenceType   String?
+  notes           String?
+  movementDate    DateTime
+  uploadBatchId   String?
+  createdAt       DateTime          @default(now())
+
+  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  branch          Branch?       @relation(fields: [branchId], references: [id])
+  warehouse       Warehouse?    @relation(fields: [warehouseId], references: [id])
+  uploadBatch     UploadBatch?  @relation(fields: [uploadBatchId], references: [id])
+
+  @@index([organizationId])
+  @@index([inventoryItemId])
+  @@index([branchId])
+  @@index([movementDate])
+  @@index([uploadBatchId])
+}
+
+model StockTransfer {
+  id              String   @id @default(cuid())
+  organizationId  String
+  fromWarehouseId String?
+  toWarehouseId   String?
+  fromBranchId    String?
+  toBranchId      String?
+  transferDate    DateTime
+  status          String   @default("completed")
+  notes           String?
+  createdAt       DateTime @default(now())
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  fromWarehouse   Warehouse? @relation("TransferFrom", fields: [fromWarehouseId], references: [id])
+  toWarehouse     Warehouse? @relation("TransferTo", fields: [toWarehouseId], references: [id])
+
+  @@index([organizationId])
+}
+
+model StockCount {
+  id             String   @id @default(cuid())
+  organizationId String
+  branchId       String?
+  warehouseId    String?
+  countDate      DateTime
+  status         String   @default("draft")
+  notes          String?
+  uploadBatchId  String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branch         Branch?          @relation(fields: [branchId], references: [id])
+  warehouse      Warehouse?       @relation(fields: [warehouseId], references: [id])
+  uploadBatch    UploadBatch?     @relation(fields: [uploadBatchId], references: [id])
+  items          StockCountItem[]
+
+  @@index([organizationId])
+  @@index([branchId])
+}
+
+model StockCountItem {
+  id              String   @id @default(cuid())
+  stockCountId    String
+  inventoryItemId String
+  systemQuantity  Float
+  countedQuantity Float
+  variance        Float
+  unitCost        Float?
+  varianceValue   Float?
+  notes           String?
+
+  stockCount      StockCount    @relation(fields: [stockCountId], references: [id], onDelete: Cascade)
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+
+  @@index([stockCountId])
+  @@index([inventoryItemId])
+}
+
+// ============================================================
+// MENU & RECIPES
+// ============================================================
+
+model MenuCategory {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  nameAr         String?
+  sortOrder      Int      @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  menuItems      MenuItem[]
+
+  @@index([organizationId])
+}
+
+model MenuItem {
+  id                  String   @id @default(cuid())
+  organizationId      String
+  categoryId          String?
+  name                String
+  nameAr              String?
+  description         String?
+  sku                 String?
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  organization        Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  category            MenuCategory?             @relation(fields: [categoryId], references: [id])
+  recipes             Recipe[]
+  sellingPrices       MenuItemPrice[]
+  salesRecordItems    SalesRecordItem[]
+  profitSnapshots     ItemProfitabilitySnapshot[]
+
+  @@unique([organizationId, sku])
+  @@index([organizationId])
+}
+
+model MenuItemPrice {
+  id               String   @id @default(cuid())
+  menuItemId       String
+  channelId        String?
+  branchId         String?
+  sellingPrice     Float
+  isDefault        Boolean  @default(false)
+  effectiveDate    DateTime @default(now())
+  expiryDate       DateTime?
+  createdAt        DateTime @default(now())
+
+  menuItem         MenuItem       @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  channel          SalesChannel?  @relation(fields: [channelId], references: [id])
+
+  @@index([menuItemId])
+}
+
+model Recipe {
+  id             String   @id @default(cuid())
+  menuItemId     String
+  versionNumber  Int      @default(1)
+  isActive       Boolean  @default(true)
+  yieldQuantity  Float    @default(1)
+  yieldUnit      String?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  menuItem       MenuItem           @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  ingredients    RecipeIngredient[]
+
+  @@index([menuItemId])
+}
+
+model RecipeIngredient {
+  id              String   @id @default(cuid())
+  recipeId        String
+  inventoryItemId String
+  quantity        Float
+  unit            String
+  yieldPct        Float    @default(1)
+  wastePct        Float    @default(0)
+  notes           String?
+  createdAt       DateTime @default(now())
+
+  recipe          Recipe        @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+
+  @@index([recipeId])
+  @@index([inventoryItemId])
+}
+
+// ============================================================
+// SALES
+// ============================================================
+
+model SalesChannel {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  nameAr         String?
+  isDelivery     Boolean  @default(false)
+  platformId     String?
+  commissionPct  Float?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  salesRecords   SalesRecord[]
+  menuItemPrices MenuItemPrice[]
+  platform       DeliveryPlatform?     @relation(fields: [platformId], references: [id])
+
+  @@index([organizationId])
+}
+
+model SalesRecord {
+  id             String   @id @default(cuid())
+  organizationId String
+  branchId       String
+  channelId      String?
+  date           DateTime
+  grossSales     Float
+  discounts      Float    @default(0)
+  netSales       Float
+  vatAmount      Float    @default(0)
+  orderCount     Int      @default(0)
+  uploadBatchId  String?
+  createdAt      DateTime @default(now())
+
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branch         Branch            @relation(fields: [branchId], references: [id])
+  channel        SalesChannel?     @relation(fields: [channelId], references: [id])
+  uploadBatch    UploadBatch?      @relation(fields: [uploadBatchId], references: [id])
+  items          SalesRecordItem[]
+
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([date])
+  @@index([channelId])
+  @@index([uploadBatchId])
+}
+
+model SalesRecordItem {
+  id             String   @id @default(cuid())
+  salesRecordId  String
+  menuItemId     String?
+  itemName       String
+  itemCode       String?
+  quantity       Float
+  unitPrice      Float
+  grossAmount    Float
+  discount       Float    @default(0)
+  netAmount      Float
+  createdAt      DateTime @default(now())
+
+  salesRecord    SalesRecord @relation(fields: [salesRecordId], references: [id], onDelete: Cascade)
+  menuItem       MenuItem?   @relation(fields: [menuItemId], references: [id])
+
+  @@index([salesRecordId])
+  @@index([menuItemId])
+}
+
+// ============================================================
+// DELIVERY PLATFORMS
+// ============================================================
+
+model DeliveryPlatform {
+  id                   String   @id @default(cuid())
+  organizationId       String
+  name                 String
+  nameAr               String?
+  defaultCommissionPct Float?
+  isActive             Boolean  @default(true)
+  createdAt            DateTime @default(now())
+
+  organization        Organization                    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  settlements         DeliverySettlement[]
+  salesChannels       SalesChannel[]
+  promotions          Promotion[]
+  profitSnapshots     PlatformProfitabilitySnapshot[]
+
+  @@index([organizationId])
+}
+
+model DeliverySettlement {
+  id                String   @id @default(cuid())
+  organizationId    String
+  platformId        String
+  branchId          String
+  periodStart       DateTime
+  periodEnd         DateTime
+  grossSales        Float
+  orderCount        Int
+  platformCommission Float
+  promotionCost     Float    @default(0)
+  marketingFees     Float    @default(0)
+  bankFees          Float    @default(0)
+  deliveryFees      Float    @default(0)
+  vatOnFees         Float    @default(0)
+  netSettlement     Float
+  uploadBatchId     String?
+  createdAt         DateTime @default(now())
+
+  organization      Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  platform          DeliveryPlatform           @relation(fields: [platformId], references: [id])
+  branch            Branch                     @relation(fields: [branchId], references: [id])
+  uploadBatch       UploadBatch?               @relation(fields: [uploadBatchId], references: [id])
+  items             DeliverySettlementItem[]
+
+  @@index([organizationId])
+  @@index([platformId])
+  @@index([branchId])
+  @@index([uploadBatchId])
+}
+
+model DeliverySettlementItem {
+  id             String   @id @default(cuid())
+  settlementId   String
+  description    String
+  amount         Float
+  type           String
+  createdAt      DateTime @default(now())
+
+  settlement     DeliverySettlement @relation(fields: [settlementId], references: [id], onDelete: Cascade)
+}
+
+model Promotion {
+  id             String   @id @default(cuid())
+  organizationId String
+  platformId     String?
+  name           String
+  startDate      DateTime
+  endDate        DateTime?
+  discountType   String
+  discountValue  Float
+  totalCost      Float?
+  totalOrders    Int?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  platform       DeliveryPlatform? @relation(fields: [platformId], references: [id])
+
+  @@index([organizationId])
+}
+
+// ============================================================
+// WASTE & QUALITY
+// ============================================================
+
+model WasteRecord {
+  id              String      @id @default(cuid())
+  organizationId  String
+  branchId        String?
+  inventoryItemId String?
+  menuItemId      String?
+  itemName        String
+  wasteReason     WasteReason
+  quantity        Float
+  unit            String
+  unitCost        Float?
+  totalCost       Float?
+  recordDate      DateTime
+  reportedBy      String?
+  approvedBy      String?
+  notes           String?
+  uploadBatchId   String?
+  isPreventable   Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+
+  organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branch          Branch?        @relation(fields: [branchId], references: [id])
+  inventoryItem   InventoryItem? @relation(fields: [inventoryItemId], references: [id])
+  uploadBatch     UploadBatch?   @relation(fields: [uploadBatchId], references: [id])
+
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([recordDate])
+  @@index([uploadBatchId])
+}
+
+model SupplierReturn {
+  id             String   @id @default(cuid())
+  organizationId String
+  supplierId     String
+  invoiceId      String?
+  returnDate     DateTime
+  reason         String
+  totalValue     Float
+  status         String   @default("pending")
+  notes          String?
+  createdAt      DateTime @default(now())
+
+  supplier       Supplier         @relation(fields: [supplierId], references: [id])
+  invoice        PurchaseInvoice? @relation(fields: [invoiceId], references: [id])
+
+  @@index([organizationId])
+  @@index([supplierId])
+}
+
+model QualityIssue {
+  id             String        @id @default(cuid())
+  organizationId String
+  supplierId     String?
+  branchId       String?
+  issueDate      DateTime
+  category       String
+  description    String
+  severity       AlertSeverity @default(MEDIUM)
+  status         String        @default("open")
+  reportedBy     String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  supplier          Supplier?          @relation(fields: [supplierId], references: [id])
+  branch            Branch?            @relation(fields: [branchId], references: [id])
+  correctiveActions CorrectiveAction[]
+
+  @@index([organizationId])
+}
+
+model CorrectiveAction {
+  id             String    @id @default(cuid())
+  qualityIssueId String
+  description    String
+  assignedTo     String?
+  dueDate        DateTime?
+  completedDate  DateTime?
+  status         String    @default("open")
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  qualityIssue   QualityIssue @relation(fields: [qualityIssueId], references: [id], onDelete: Cascade)
+}
+
+// ============================================================
+// SUPPLIER SCORECARD
+// ============================================================
+
+model SupplierScorecard {
+  id                      String   @id @default(cuid())
+  organizationId          String
+  supplierId              String
+  periodStart             DateTime
+  periodEnd               DateTime
+  priceScore              Float
+  qualityScore            Float
+  deliveryScore           Float
+  contractComplianceScore Float
+  invoiceAccuracyScore    Float
+  responsivenessScore     Float
+  overallScore            Float
+  rank                    Int?
+  notes                   String?
+  createdAt               DateTime @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  supplier       Supplier     @relation(fields: [supplierId], references: [id])
+
+  @@index([organizationId])
+  @@index([supplierId])
+}
+
+// ============================================================
+// SNAPSHOTS (for performance)
+// ============================================================
+
+model BranchProfitabilitySnapshot {
+  id                        String   @id @default(cuid())
+  organizationId            String
+  branchId                  String
+  period                    DateTime
+  grossSales                Float
+  netSales                  Float
+  foodCost                  Float
+  packagingCost             Float
+  deliveryFees              Float
+  wasteValue                Float
+  stockVarianceValue        Float
+  discounts                 Float
+  laborCostEstimate         Float?
+  rentCost                  Float?
+  fixedCostAllocations      Float?
+  contributionProfit        Float
+  operatingProfitEstimate   Float?
+  profitMarginPct           Float?
+  orderCount                Int
+  createdAt                 DateTime @default(now())
+
+  branch         Branch       @relation(fields: [branchId], references: [id])
+
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([period])
+}
+
+model ItemProfitabilitySnapshot {
+  id                  String                @id @default(cuid())
+  organizationId      String
+  menuItemId          String
+  period              DateTime
+  sellingPrice        Float
+  foodCost            Float
+  packagingCost       Float
+  contributionMargin  Float
+  foodCostPct         Float
+  grossMarginPct      Float
+  salesQuantity       Int
+  salesMixPct         Float?
+  menuEngClass        MenuEngineeringClass?
+  createdAt           DateTime              @default(now())
+
+  menuItem            MenuItem @relation(fields: [menuItemId], references: [id])
+
+  @@index([organizationId])
+  @@index([menuItemId])
+  @@index([period])
+}
+
+model PlatformProfitabilitySnapshot {
+  id                    String   @id @default(cuid())
+  organizationId        String
+  platformId            String
+  period                DateTime
+  grossSales            Float
+  orderCount            Int
+  avgOrderValue         Float
+  commissionAmount      Float
+  promotionCost         Float
+  bankFees              Float
+  netSettlement         Float
+  estimatedFoodCost     Float
+  packagingCost         Float
+  contributionMargin    Float
+  marginPct             Float
+  profitPerOrder        Float
+  createdAt             DateTime @default(now())
+
+  platform              DeliveryPlatform @relation(fields: [platformId], references: [id])
+
+  @@index([organizationId])
+  @@index([platformId])
+  @@index([period])
+}
+
+// ============================================================
+// DATA IMPORT
+// ============================================================
+
+model UploadBatch {
+  id               String       @id @default(cuid())
+  organizationId   String
+  uploadType       UploadType
+  status           UploadStatus @default(PENDING)
+  originalFileName String
+  storedFileName   String?
+  fileSize         Int?
+  mimeType         String?
+  rowCount         Int?
+  importedCount    Int?
+  errorCount       Int?
+  errorDetails     Json?
+  columnMapping    Json?
+  uploadedBy       String?
+  importedAt       DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  organization        Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  salesRecords        SalesRecord[]
+  deliverySettlements DeliverySettlement[]
+  purchaseInvoices    PurchaseInvoice[]
+  stockMovements      StockMovement[]
+  stockCounts         StockCount[]
+  wasteRecords        WasteRecord[]
+
+  @@index([organizationId])
+  @@index([uploadType])
+}
+
+// ============================================================
+// ALERTS & RECOMMENDATIONS
+// ============================================================
+
+model Alert {
+  id             String        @id @default(cuid())
+  organizationId String
+  alertType      AlertType
+  severity       AlertSeverity
+  title          String
+  titleAr        String?
+  description    String?
+  descriptionAr  String?
+  entityType     String?
+  entityId       String?
+  isRead         Boolean       @default(false)
+  isResolved     Boolean       @default(false)
+  resolvedAt     DateTime?
+  resolvedBy     String?
+  createdAt      DateTime      @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([alertType])
+  @@index([severity])
+  @@index([createdAt])
+}
+
+model Recommendation {
+  id              String               @id @default(cuid())
+  organizationId  String
+  title           String
+  titleAr         String?
+  description     String
+  descriptionAr   String?
+  module          String
+  estimatedImpact Float?
+  impactUnit      String?
+  confidence      Float?
+  priority        Int                  @default(5)
+  ownerRole       UserRole?
+  dueDate         DateTime?
+  status          RecommendationStatus @default(NEW)
+  actionType      String?
+  entityType      String?
+  entityId        String?
+  aiGenerated     Boolean              @default(false)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([priority])
+}
+
+// ============================================================
+// BUDGETS & TARGETS
+// ============================================================
+
+model BudgetTarget {
+  id                    String   @id @default(cuid())
+  organizationId        String
+  branchId              String?
+  period                DateTime
+  targetSales           Float?
+  targetFoodCostPct     Float?
+  targetWastePct        Float?
+  targetProfitMarginPct Float?
+  purchaseBudget        Float?
+  laborBudgetPct        Float?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branch         Branch?      @relation(fields: [branchId], references: [id])
+
+  @@index([organizationId])
+  @@index([branchId])
+}
+
+// ============================================================
+// SETTINGS & AUDIT
+// ============================================================
+
+model AppSetting {
+  id             String   @id @default(cuid())
+  organizationId String
+  key            String
+  value          String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, key])
+  @@index([organizationId])
+}
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  organizationId String?
+  userId         String?
+  action         String
+  entityType     String?
+  entityId       String?
+  beforeValue    Json?
+  afterValue     Json?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  user           User?         @relation(fields: [userId], references: [id])
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([entityType])
+}
+
+model Report {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  reportType     String
+  parameters     Json?
+  generatedBy    String?
+  fileUrl        String?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+}
