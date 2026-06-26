@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PromptForge — مصنع البرومبتات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4f3ff;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --border: #d8d4f8;
+  --primary: #6d57f0;
+  --primary-hover: #5b45d8;
+  --primary-light: #ede9ff;
+  --accent: #f59e0b;
+  --text: #1c1830;
+  --muted: #6b6b8a;
+  --success: #059669;
+  --danger: #dc2626;
+  --danger-bg: #fff0f0;
+  --shadow: 0 2px 16px rgba(109,87,240,.10);
+  --shadow-lg: 0 8px 40px rgba(109,87,240,.18);
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html[lang="ar"] body { font-family: 'IBM Plex Sans Arabic','Noto Sans Arabic',Tahoma,sans-serif; }
+html[lang="en"] body { font-family: 'Inter','Segoe UI',system-ui,sans-serif; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2px 12px rgba(109,87,240,.07);
+}
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--primary);
+}
+.logo-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg,#6d57f0,#f59e0b);
+  display: grid; place-items: center;
+  font-weight: 800; font-size: 12px; color: #fff;
+  font-family: 'Inter',sans-serif;
+  box-shadow: 0 3px 10px rgba(109,87,240,.4);
+}
+.lang-btn {
+  background: var(--primary-light);
+  border: 1.5px solid var(--border);
+  color: var(--primary);
+  padding: 7px 18px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 600;
+  transition: all .15s;
+}
+.lang-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+.hero {
+  text-align: center;
+  padding: 52px 20px 24px;
+}
+.hero h1 {
+  font-size: clamp(28px,5vw,44px);
+  font-weight: 800;
+  background: linear-gradient(135deg,#6d57f0 30%,#f59e0b 90%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 10px;
+}
+.hero p { color: var(--muted); font-size: 17px; }
+
+main {
+  flex: 1;
+  padding: 0 16px 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.card {
+  width: 100%;
+  max-width: 780px;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  box-shadow: var(--shadow);
+}
+
+label, .field-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+
+textarea {
+  width: 100%;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 14px 16px;
+  font-size: 15px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 120px;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  line-height: 1.7;
+}
+textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(109,87,240,.12); }
+textarea::placeholder { color: #b0aecf; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media(max-width:560px){ .grid-2 { grid-template-columns: 1fr; } }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  padding: 7px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  transition: all .15s;
+  white-space: nowrap;
+  user-select: none;
+}
+.chip:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+.chip.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(109,87,240,.3);
+}
+
+select {
+  width: 100%;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+  transition: border-color .15s;
+}
+select:focus { border-color: var(--primary); }
+
+.api-section {
+  background: #fffbf0;
+  border: 1.5px dashed #f59e0b;
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  display: none;
+  gap: 10px;
+  flex-direction: column;
+}
+.api-section.visible { display: flex; }
+.api-section p { font-size: 12.5px; color: #92700a; line-height: 1.5; }
+.api-section input {
+  width: 100%;
+  background: #fff;
+  border: 1.5px solid #f0d070;
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: 'JetBrains Mono','Courier New',monospace;
+  outline: none;
+  transition: border-color .15s;
+}
+.api-section input:focus { border-color: var(--accent); }
+
+.btn-row { display: flex; gap: 12px; }
+@media(max-width:480px){ .btn-row { flex-direction: column; } }
+
+.btn {
+  flex: 1;
+  padding: 14px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  transition: all .15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-hint { font-size: 11px; font-weight: 400; opacity: .75; }
+
+.btn-quick {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+.btn-quick:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); box-shadow: 0 4px 20px rgba(109,87,240,.15); }
+.btn-quick:active:not(:disabled) { transform: scale(.98); }
+
+.btn-ai {
+  background: linear-gradient(135deg,#6d57f0,#a855f7);
+  color: #fff;
+  box-shadow: 0 4px 24px rgba(109,87,240,.35);
+}
+.btn-ai:hover:not(:disabled) { opacity: .92; transform: translateY(-2px); box-shadow: 0 8px 32px rgba(109,87,240,.4); }
+.btn-ai:active:not(:disabled) { transform: translateY(0); }
+
+.error-msg {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1.5px solid rgba(220,38,38,.2);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 13.5px;
+  font-weight: 500;
+  display: none;
+}
+.error-msg.visible { display: block; }
+
+.result-card {
+  width: 100%;
+  max-width: 780px;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: none;
+  animation: fadeIn .25s ease;
+  box-shadow: var(--shadow-lg);
+}
+.result-card.visible { display: block; }
+
+@keyframes fadeIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+.result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1.5px solid var(--border);
+  flex-wrap: wrap;
+  gap: 10px;
+  background: linear-gradient(135deg,#f7f5ff,#fff);
+}
+.result-title { font-weight: 700; font-size: 15px; color: var(--text); }
+.badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+.badge-ai { background: #ede9ff; color: #6d57f0; }
+.badge-local { background: #d1fae5; color: #065f46; }
+.badge-intent { background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
+
+.btn-reset {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  color: var(--muted);
+  padding: 7px 16px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 600;
+  transition: all .15s;
+}
+.btn-reset:hover { color: var(--primary); border-color: var(--primary); background: var(--primary-light); }
+
+.prompt-wrap { padding: 20px 22px; position: relative; }
+.prompt-block {
+  background: #f8f7ff;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 18px 16px;
+  font-family: 'JetBrains Mono','Fira Code','Courier New',monospace;
+  font-size: 13px;
+  line-height: 1.85;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text);
+  position: relative;
+}
+.btn-copy {
+  position: absolute;
+  top: 10px;
+  inset-inline-end: 10px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.prompt-block:hover .btn-copy { opacity: 1; }
+.btn-copy-mobile {
+  display: none;
+  width: 100%;
+  margin-top: 10px;
+  padding: 11px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+@media(max-width:600px){ .btn-copy-mobile { display: block; } }
+
+.accordion { border-top: 1.5px solid var(--border); }
+.accordion-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 22px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: start;
+  transition: color .15s;
+}
+.accordion-btn:hover { color: var(--primary); }
+.chevron { transition: transform .2s; display: inline-block; font-size: 11px; }
+.chevron.open { transform: rotate(180deg); }
+.accordion-body { padding: 0 22px 18px; display: none; }
+.accordion-body.open { display: block; }
+
+.variant-block {
+  background: #f8f7ff;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  font-family: 'JetBrains Mono',monospace;
+  font-size: 12px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text);
+  position: relative;
+  margin-bottom: 10px;
+}
+.variant-block:last-child { margin-bottom: 0; }
+.variant-copy {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.variant-block:hover .variant-copy { opacity: 1; }
+
+.rationale-text { font-size: 13.5px; line-height: 1.75; color: var(--text); }
+
+.tips-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.tips-list li {
+  display: flex;
+  gap: 10px;
+  font-size: 13.5px;
+  color: var(--text);
+  background: var(--primary-light);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+}
+.tips-list li::before { content: '💡'; flex-shrink: 0; }
+
+footer {
+  text-align: center;
+  padding: 18px;
+  font-size: 13px;
+  color: var(--muted);
+  border-top: 1.5px solid var(--border);
+  background: var(--surface);
+}
+
+.spinner {
+  display: inline-block;
+  width: 15px; height: 15px;
+  border: 2.5px solid rgba(255,255,255,.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  vertical-align: middle;
+  margin-inline-end: 6px;
+}
+.spinner-dark {
+  border: 2.5px solid rgba(109,87,240,.3);
+  border-top-color: var(--primary);
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <div class="logo-icon">PF</div>
+    <span>PromptForge</span>
+  </div>
+  <button class="lang-btn" id="lang-btn">English</button>
+</nav>
+
+<div class="hero">
+  <h1>PromptForge</h1>
+  <p id="tagline">حوّل فكرتك إلى برومبت احترافي</p>
+</div>
+
+<main>
+  <div class="card">
+    <div>
+      <label id="lbl-idea">فكرتك</label>
+      <textarea id="idea" rows="5" placeholder="اكتب فكرتك هنا..."></textarea>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <div class="field-label" id="lbl-model">النموذج المستهدف</div>
+        <div class="chips" id="model-chips">
+          <button class="chip active" data-model="claude">🤖 Claude</button>
+          <button class="chip" data-model="openai">💬 ChatGPT</button>
+          <button class="chip" data-model="gemini">♊ Gemini</button>
+          <button class="chip" data-model="midjourney">🎨 Midjourney</button>
+          <button class="chip" data-model="dalle">🖼️ DALL·E</button>
+          <button class="chip" data-model="stablediffusion">⚗️ Stable Diffusion</button>
+        </div>
+      </div>
+      <div>
+        <label for="out-lang" id="lbl-lang">لغة البرومبت</label>
+        <select id="out-lang">
+          <option value="ar">العربية</option>
+          <option value="en">English</option>
+          <option value="es">Español</option>
+          <option value="fr">Français</option>
+          <option value="de">Deutsch</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="api-section" id="api-section">
+      <p id="api-hint">🔑 أدخل مفتاح Anthropic لتفعيل الترقية. المفتاح يُستخدم محلياً فقط.</p>
+      <input type="password" id="api-key" placeholder="sk-ant-api03-..." autocomplete="off">
+    </div>
+
+    <div class="error-msg" id="error-msg"></div>
+
+    <div class="btn-row">
+      <button class="btn btn-quick" id="btn-quick">
+        <span id="lbl-quick">⚡ توليد سريع</span>
+        <span class="btn-hint" id="hint-quick">مجاني وفوري — بدون AI</span>
+      </button>
+      <button class="btn btn-ai" id="btn-ai">
+        <span id="lbl-ai">✨ ترقية بالذكاء الاصطناعي</span>
+        <span class="btn-hint" id="hint-ai">نتيجة أعمق باستخدام Claude Haiku</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="result-card" id="result-card">
+    <div class="result-header">
+      <div>
+        <div class="result-title" id="lbl-result">البرومبت المُولَّد</div>
+        <div class="badges">
+          <span class="badge badge-local" id="badge-local" style="display:none"></span>
+          <span class="badge badge-ai" id="badge-ai" style="display:none"></span>
+          <span class="badge badge-intent" id="badge-intent"></span>
+        </div>
+      </div>
+      <button class="btn-reset" id="btn-reset">+ جديد</button>
+    </div>
+    <div class="prompt-wrap">
+      <div class="prompt-block" id="prompt-out">
+        <button class="btn-copy" id="copy-main">نسخ</button>
+        <span id="prompt-text"></span>
+      </div>
+      <button class="btn-copy-mobile" id="copy-mobile">نسخ البرومبت</button>
+    </div>
+    <div class="accordion" id="accordion-variants" style="display:none">
+      <button class="accordion-btn" id="acc-btn-variants">
+        <span id="lbl-variants">البدائل</span>
+        <span class="chevron" id="chev-variants">▾</span>
+      </button>
+      <div class="accordion-body" id="body-variants"></div>
+    </div>
+    <div class="accordion" id="accordion-rationale" style="display:none">
+      <button class="accordion-btn" id="acc-btn-rationale">
+        <span id="lbl-rationale">لماذا هذا البرومبت فعّال؟</span>
+        <span class="chevron" id="chev-rationale">▾</span>
+      </button>
+      <div class="accordion-body" id="body-rationale"></div>
+    </div>
+    <div class="accordion" id="accordion-tips" style="display:none">
+      <button class="accordion-btn" id="acc-btn-tips">
+        <span id="lbl-tips">نصائح للتحسين</span>
+        <span class="chevron" id="chev-tips">▾</span>
+      </button>
+      <div class="accordion-body" id="body-tips"></div>
+    </div>
+  </div>
+</main>
+
+<footer id="footer-text">مبني بـ ❤️ و Claude</footer>
+
+<script>
+var INTENT_KW = {
+  writing:['write','اكتب','article','مقال','email','رسالة','blog','post','marketing','تسويق','content','محتوى','essay','story','قصة','caption','newsletter','إعلان','copywriting','social media','تغريدة','منشور'],
+  coding:['code','كود','function','دالة','bug','debug','class','api','script','برمج','implement','refactor','برمجة','algorithm','خوارزمية','component','unit test','sql','endpoint','typescript','python','react','database'],
+  image:['image','صورة','photo','illustration','رسم','artwork','portrait','landscape','generate image','midjourney','dall-e','stable diffusion','visual','فن','art style','fantasy','realistic photo','render','create an image'],
+  analysis:['analyze','حلل','analysis','تحليل','data','بيانات','report','تقرير','statistics','إحصاء','evaluate','assess','compare','قارن','benchmark','market analysis','تحليل السوق','insights'],
+  agent:['agent','وكيل','system prompt','assistant','مساعد','chatbot','bot','autonomous','workflow','customer support','sales bot','شخصية النظام','build an ai'],
+  reasoning:['solve','حل','problem','مشكلة','logic','منطق','plan','strategy','استراتيجية','decision','proof','برهان','debate','pros and cons','مزايا وعيوب','think through','calculate'],
+  roleplay:['pretend','roleplay','act as','character','شخصية','play','scenario','imagine','تخيل','simulate','تمثيل','impersonate','you are','تصرف كأنك'],
+  education:['explain','اشرح','teach','علّم','tutorial','lesson','درس','beginner guide','step by step','خطوة بخطوة','what is','ما هو','how does','كيف يعمل','دليل','simplify','اشرح ببساطة'],
+  translation:['translate','ترجم','translation','ترجمة','from arabic','from english','للعربية','للإنجليزية','into arabic','localize','توطين'],
+};
+
+function classifyIntent(text){
+  var lower=text.toLowerCase(),scores={},best='writing',bestScore=0;
+  for(var intent in INTENT_KW){
+    scores[intent]=0;
+    var kws=INTENT_KW[intent];
+    for(var i=0;i<kws.length;i++){
+      var kw=kws[i];
+      if(lower.indexOf(kw.toLowerCase())!==-1) scores[intent]+=kw.indexOf(' ')!==-1?3:kw.length>5?2:1;
+    }
+  }
+  for(var k in scores){ if(scores[k]>bestScore){bestScore=scores[k];best=k;} }
+  return best;
+}
+
+function detectLanguage(text){
+  var ar=(text.match(/[؀-ۿ]/g)||[]).length;
+  var all=(text.match(/[a-zA-Z؀-ۿ]/g)||[]).length;
+  return all===0?'en':ar/all>0.5?'ar':'en';
+}
+
+function adaptClaude(s){
+  var p=[];
+  if(s.role) p.push('<role>\n'+s.role+'\n</role>');
+  p.push('<task>\n'+s.objective+'\n</task>');
+  if(s.context) p.push('<context>\n'+s.context+'\n</context>');
+  if(s.constraints&&s.constraints.length) p.push('<constraints>\n'+s.constraints.map(function(c){return'- '+c;}).join('\n')+'\n</constraints>');
+  if(s.tone) p.push('<tone>'+s.tone+'</tone>');
+  if(s.outputFormat) p.push('<output_format>\n'+s.outputFormat+'\n</output_format>');
+  if(s.reasoning) p.push('<thinking>\nفكّر خطوة بخطوة قبل الإجابة.\n</thinking>');
+  return p.join('\n\n');
+}
+
+function adaptOpenAI(s){
+  var p=[];
+  if(s.role) p.push('# Role\n'+s.role);
+  p.push('# Task\n'+s.objective);
+  if(s.context) p.push('# Context\n'+s.context);
+  if(s.constraints&&s.constraints.length) p.push('# Constraints\n'+s.constraints.map(function(c){return'- '+c;}).join('\n'));
+  if(s.tone) p.push('# Tone\n'+s.tone);
+  if(s.outputFormat) p.push('# Output Format\n'+s.outputFormat);
+  if(s.reasoning) p.push('# Instructions\n1. Think step by step.\n2. Show reasoning.\n3. Verify conclusion.');
+  return p.join('\n\n');
+}
+
+function adaptMidjourney(s){
+  var parts=[s.objective,s.context,s.tone,'highly detailed','cinematic lighting'].filter(Boolean);
+  return '/imagine '+parts.join(', ')+' --ar 16:9 --v 6 --style raw --q 1';
+}
+
+function adaptSD(s){
+  var pos=[s.objective,s.context,s.tone,'masterpiece','best quality','highly detailed','8k','sharp focus'].filter(Boolean).join(', ');
+  return '**Positive:**\n'+pos+'\n\n**Negative:**\nblurry, low quality, distorted, watermark\n\n**Params:** Steps:30 | CFG:7 | Size:768x512';
+}
+
+var ROLES={
+  writing:{ar:'أنت كاتب محترف متخصص في إنتاج محتوى إبداعي وفعّال',en:'You are a professional writer specializing in compelling, high-impact content'},
+  coding:{ar:'أنت مهندس برمجيات خبير بأكثر من 10 سنوات من الخبرة',en:'You are a senior software engineer with 10+ years of experience'},
+  image:{ar:'',en:''},
+  analysis:{ar:'أنت محلل بيانات خبير مع خلفية قوية في التحليل الكمي والنوعي',en:'You are an expert data analyst with strong quantitative and qualitative skills'},
+  agent:{ar:'أنت مصمم أنظمة ذكاء اصطناعي متخصص في بناء مساعدين ذكيين فعّالين',en:'You are an AI systems designer specializing in effective intelligent assistants'},
+  reasoning:{ar:'أنت خبير في حل المشكلات والتفكير المنطقي المنهجي',en:'You are an expert in systematic problem-solving and logical reasoning'},
+  roleplay:{ar:'أنت ممثل بارع قادر على تجسيد أي شخصية بواقعية عالية',en:'You are a skilled actor capable of fully embodying any character'},
+  education:{ar:'أنت معلم محترف قادر على شرح أعقد المفاهيم بأسلوب واضح',en:'You are a gifted educator who explains complex concepts clearly'},
+  translation:{ar:'أنت مترجم محترف متخصص في الترجمة الدقيقة مع مراعاة الفروق الثقافية',en:'You are a professional translator specializing in accurate, culturally-aware translation'},
+};
+
+var FORMATS={
+  writing:{ar:'اكتب النص بشكل منظم. استخدم عناوين فرعية إذا لزم.',en:'Write in an organized structure. Use subheadings for longer content.'},
+  coding:{ar:'قدّم الكود داخل code block مع تعليقات.',en:'Present code in a formatted code block with inline comments.'},
+  image:{ar:'',en:''},
+  analysis:{ar:'ملخص تنفيذي أولاً ثم التحليل التفصيلي ختاماً بالتوصيات.',en:'Executive summary first, then detailed analysis, concluding with recommendations.'},
+  agent:{ar:'تعليمات واضحة تغطي: الهوية، النطاق، أسلوب التعامل، القيود.',en:'Clear instructions covering: identity, scope, interaction style, boundaries.'},
+  reasoning:{ar:'اعرض تفكيرك خطوة بخطوة قبل الإجابة النهائية.',en:'Show your thinking step by step before the final answer.'},
+  roleplay:{ar:'ابق في الشخصية طوال المحادثة.',en:"Stay in character throughout."},
+  education:{ar:'اشرح تدريجياً من البسيط للمعقد. استخدم تشبيهات عملية.',en:'Explain progressively from simple to complex. Use everyday analogies.'},
+  translation:{ar:'ترجمة طبيعية تراعي السياق والفروق الثقافية.',en:'Natural translation that preserves meaning and cultural nuances.'},
+};
+
+var TONES={
+  writing:{ar:'احترافي وجذاب',en:'Professional and engaging'},
+  coding:{ar:'تقني ودقيق',en:'Technical and precise'},
+  image:{ar:'سينمائي وحيوي',en:'Cinematic, vibrant'},
+  analysis:{ar:'موضوعي ومنهجي',en:'Objective and systematic'},
+  agent:{ar:'واضح ومباشر',en:'Clear and direct'},
+  reasoning:{ar:'منطقي وتحليلي',en:'Logical and analytical'},
+  roleplay:{ar:'غامر وتفاعلي',en:'Immersive and interactive'},
+  education:{ar:'ودي وصبور',en:'Friendly and patient'},
+  translation:{ar:'أمين للمعنى',en:'Faithful to the original'},
+};
+
+var SLOTS={
+  writing:['role','objective','context','tone','outputFormat'],
+  coding:['role','objective','context','outputFormat','reasoning'],
+  image:['objective','context','tone'],
+  analysis:['role','objective','context','outputFormat','reasoning'],
+  agent:['role','objective','context','constraints','outputFormat'],
+  reasoning:['objective','context','reasoning','outputFormat'],
+  roleplay:['role','objective','context','tone'],
+  education:['role','objective','context','outputFormat','tone'],
+  translation:['role','objective','context','outputFormat'],
+};
+
+function buildLocalPrompt(idea,model,lang){
+  var l=lang||detectLanguage(idea);
+  var intent=classifyIntent(idea);
+  var rel=SLOTS[intent]||SLOTS.writing;
+  var s={objective:idea};
+  if(rel.indexOf('role')!==-1&&ROLES[intent]&&ROLES[intent][l]) s.role=ROLES[intent][l];
+  if(rel.indexOf('outputFormat')!==-1&&FORMATS[intent]&&FORMATS[intent][l]) s.outputFormat=FORMATS[intent][l];
+  if(rel.indexOf('tone')!==-1&&TONES[intent]&&TONES[intent][l]) s.tone=TONES[intent][l];
+  if(rel.indexOf('reasoning')!==-1) s.reasoning=true;
+  var p;
+  switch(model){
+    case 'claude': p=adaptClaude(s); break;
+    case 'openai': case 'gemini': p=adaptOpenAI(s); break;
+    case 'midjourney': p=adaptMidjourney(s); break;
+    case 'dalle': case 'stablediffusion': p=adaptSD(s); break;
+    default: p=adaptClaude(s);
+  }
+  return {prompt:p,intent:intent,lang:l};
+}
+
+var MODEL_INST={
+  claude:'Use XML tags: <role>, <task>, <context>, <constraints>, <output_format>, <thinking>.',
+  openai:'Use Markdown headers (# Role, # Task, # Context, # Output Format).',
+  gemini:'Be detailed and context-rich.',
+  midjourney:'Generate a /imagine command with visual comma-separated terms --ar 16:9 --v 6 --style raw.',
+  dalle:'A detailed 2-3 sentence visual description.',
+  stablediffusion:'Positive and negative prompts with quality boosters.',
+};
+
+function buildMetaPrompt(idea,intent,model,lang){
+  var inst=MODEL_INST[model]||MODEL_INST.claude;
+  return 'You are a world-class prompt engineer. Transform this raw idea into a professional prompt.\n\n<user_idea>'+idea+'</user_idea>\n<intent>'+intent+'</intent>\n<target_model>'+model+'</target_model>\n<output_language>'+lang+'</output_language>\n<model_instructions>'+inst+'</model_instructions>\n\nRules:\n1. Write ENTIRELY in '+lang+'.\n2. Apply model_instructions style.\n3. Fill all relevant slots.\n\nReturn ONLY valid JSON:\n{\n  "prompt": "...",\n  "variants": ["...","..."],\n  "rationale": "...",\n  "tips": ["...","..."]\n}';
+}
+
+var lang='ar',model='claude',loading=false;
+
+var UI={
+  ar:{tagline:'حوّل فكرتك إلى برومبت احترافي',langBtn:'English',lblIdea:'فكرتك',ph:'اكتب فكرتك هنا... مثال: أريد برومبت لكتابة مقال عن مستقبل الذكاء الاصطناعي',lblModel:'النموذج المستهدف',lblLang:'لغة البرومبت',apiHint:'🔑 أدخل مفتاح Anthropic لتفعيل الترقية. المفتاح يُستخدم محلياً فقط.',quick:'⚡ توليد سريع',hq:'مجاني وفوري — بدون AI',ai:'✨ ترقية بالذكاء الاصطناعي',ha:'نتيجة أعمق باستخدام Claude Haiku',gen:'جاري التوليد...',upg:'جاري الترقية...',errEmpty:'الرجاء إدخال فكرتك أولاً',errApi:'أدخل مفتاح API أولاً',errFail:'حدث خطأ. تأكد من صحة مفتاح API.',resTitle:'البرومبت المُولَّد',bLocal:'⚡ توليد محلي',bAi:'✨ مُحسَّن بـ Claude',copy:'نسخ',copied:'✓ تم النسخ',newBtn:'+ جديد',vars:'📋 البدائل',rat:'🎯 لماذا هذا البرومبت فعّال؟',tips:'💡 نصائح للتحسين',footer:'مبني بـ ❤️ و Claude',intents:{writing:'✍️ كتابة',coding:'💻 برمجة',image:'🎨 صورة',analysis:'📊 تحليل',agent:'🤖 وكيل AI',reasoning:'🧠 استدلال',roleplay:'🎭 تمثيل أدوار',education:'📚 تعليم',translation:'🌐 ترجمة'}},
+  en:{tagline:'Transform your idea into a professional prompt',langBtn:'العربية',lblIdea:'Your Idea',ph:'Describe your idea here...',lblModel:'Target Model',lblLang:'Prompt Language',apiHint:'🔑 Enter your Anthropic API key. Used locally only.',quick:'⚡ Quick Generate',hq:'Free & instant — no AI',ai:'✨ AI Upgrade',ha:'Deeper result using Claude Haiku',gen:'Generating...',upg:'Upgrading...',errEmpty:'Please enter your idea first',errApi:'Enter your API key first',errFail:'Error. Check your API key.',resTitle:'Generated Prompt',bLocal:'⚡ Local',bAi:'✨ AI Enhanced',copy:'Copy',copied:'✓ Copied!',newBtn:'+ New',vars:'📋 Variants',rat:'🎯 Why effective?',tips:'💡 Tips',footer:'Built with ❤️ and Claude',intents:{writing:'✍️ Writing',coding:'💻 Coding',image:'🎨 Image',analysis:'📊 Analysis',agent:'🤖 AI Agent',reasoning:'🧠 Reasoning',roleplay:'🎭 Roleplay',education:'📚 Education',translation:'🌐 Translation'}},
+};
+
+function u(){return UI[lang];}
+function $(id){return document.getElementById(id);}
+
+function applyLang(){
+  var v=u();
+  document.documentElement.lang=lang;
+  document.documentElement.dir=lang==='ar'?'rtl':'ltr';
+  $('tagline').textContent=v.tagline;
+  $('lang-btn').textContent=v.langBtn;
+  $('lbl-idea').textContent=v.lblIdea;
+  $('idea').placeholder=v.ph;
+  $('lbl-model').textContent=v.lblModel;
+  $('lbl-lang').textContent=v.lblLang;
+  $('api-hint').textContent=v.apiHint;
+  $('lbl-quick').textContent=v.quick;
+  $('hint-quick').textContent=v.hq;
+  $('lbl-ai').textContent=v.ai;
+  $('hint-ai').textContent=v.ha;
+  $('lbl-result').textContent=v.resTitle;
+  $('btn-reset').textContent=v.newBtn;
+  $('lbl-variants').textContent=v.vars;
+  $('lbl-rationale').textContent=v.rat;
+  $('lbl-tips').textContent=v.tips;
+  $('footer-text').textContent=v.footer;
+  $('badge-local').textContent=v.bLocal;
+  $('badge-ai').textContent=v.bAi;
+  $('copy-main').textContent=v.copy;
+  $('copy-mobile').textContent=v.copy;
+}
+
+function showErr(msg){var e=$('error-msg');e.textContent=msg;e.classList.add('visible');}
+function clearErr(){$('error-msg').classList.remove('visible');}
+
+function setLoad(on,ai){
+  loading=on;
+  $('btn-quick').disabled=on;
+  $('btn-ai').disabled=on;
+  if(on){
+    if(ai) $('lbl-ai').innerHTML='<span class="spinner"></span>'+u().upg;
+    else $('lbl-quick').innerHTML='<span class="spinner spinner-dark"></span>'+u().gen;
+  } else {
+    $('lbl-quick').textContent=u().quick;
+    $('lbl-ai').textContent=u().ai;
+  }
+}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function clip(text,btn){
+  var orig=btn.textContent;
+  var cb=function(){btn.textContent=u().copied;setTimeout(function(){btn.textContent=orig;},2000);};
+  if(navigator.clipboard&&window.isSecureContext){
+    navigator.clipboard.writeText(text).then(cb);
+  } else {
+    var t=document.createElement('textarea');
+    t.value=text;t.style.position='fixed';t.style.opacity='0';
+    document.body.appendChild(t);t.select();
+    try{document.execCommand('copy');}catch(e){}
+    document.body.removeChild(t);cb();
+  }
+}
+
+function showResult(data,isAI){
+  var v=u();
+  $('prompt-text').textContent=data.prompt;
+  $('badge-local').style.display=isAI?'none':'inline';
+  $('badge-ai').style.display=isAI?'inline':'none';
+  $('badge-intent').textContent=v.intents[data.intent]||data.intent;
+  var hv=isAI&&data.variants&&data.variants.length;
+  var hr=isAI&&data.rationale;
+  var ht=isAI&&data.tips&&data.tips.length;
+  $('accordion-variants').style.display=hv?'block':'none';
+  $('accordion-rationale').style.display=hr?'block':'none';
+  $('accordion-tips').style.display=ht?'block':'none';
+  if(hv){
+    $('body-variants').innerHTML=data.variants.map(function(vt){
+      return '<div class="variant-block"><span>'+esc(vt)+'</span><button class="variant-copy">'+v.copy+'</button></div>';
+    }).join('');
+    $('body-variants').querySelectorAll('.variant-copy').forEach(function(btn,i){
+      btn.addEventListener('click',function(){clip(data.variants[i],btn);});
+    });
+  }
+  if(hr) $('body-rationale').innerHTML='<p class="rationale-text">'+esc(data.rationale)+'</p>';
+  if(ht) $('body-tips').innerHTML='<ul class="tips-list">'+data.tips.map(function(tip){return'<li>'+esc(tip)+'</li>';}).join('')+'</ul>';
+  $('result-card').classList.add('visible');
+  setTimeout(function(){$('result-card').scrollIntoView({behavior:'smooth',block:'start'});},50);
+}
+
+function doQuick(){
+  clearErr();
+  var idea=$('idea').value.trim();
+  if(!idea){showErr(u().errEmpty);return;}
+  var ol=$('out-lang').value;
+  setLoad(true,false);
+  setTimeout(function(){
+    try{var r=buildLocalPrompt(idea,model,ol);showResult(r,false);}
+    catch(e){showErr(e.message||String(e));}
+    setLoad(false,false);
+  },10);
+}
+
+function doAI(){
+  clearErr();
+  var idea=$('idea').value.trim();
+  if(!idea){showErr(u().errEmpty);return;}
+  $('api-section').classList.add('visible');
+  var key=$('api-key').value.trim();
+  if(!key){$('api-key').focus();showErr(u().errApi);return;}
+  var ol=$('out-lang').value;
+  var intent=classifyIntent(idea);
+  var mp=buildMetaPrompt(idea,intent,model,ol);
+  setLoad(true,true);
+  fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-allow-browser':'true'},
+    body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:2048,messages:[{role:'user',content:mp}]}),
+  }).then(function(res){
+    if(!res.ok) return res.json().catch(function(){return{};}).then(function(e){throw new Error(e.error?e.error.message:'HTTP '+res.status);});
+    return res.json();
+  }).then(function(msg){
+    var raw=msg.content.filter(function(b){return b.type==='text';}).map(function(b){return b.text;}).join('');
+    var clean=raw.replace(/^```(?:json)?\s*/m,'').replace(/\s*```$/m,'').trim();
+    var data=JSON.parse(clean);
+    showResult(Object.assign({},data,{intent:intent}),true);
+    setLoad(false,true);
+  }).catch(function(e){
+    showErr(u().errFail+' — '+(e.message||String(e)));
+    setLoad(false,true);
+  });
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  $('lang-btn').addEventListener('click',function(){lang=lang==='ar'?'en':'ar';applyLang();});
+  $('model-chips').addEventListener('click',function(e){
+    var c=e.target.closest('.chip');
+    if(!c) return;
+    document.querySelectorAll('.chip').forEach(function(x){x.classList.remove('active');});
+    c.classList.add('active');
+    model=c.dataset.model;
+  });
+  $('btn-quick').addEventListener('click',doQuick);
+  $('btn-ai').addEventListener('click',doAI);
+  $('btn-reset').addEventListener('click',function(){$('result-card').classList.remove('visible');$('idea').focus();});
+  $('copy-main').addEventListener('click',function(){clip($('prompt-text').textContent,$('copy-main'));});
+  $('copy-mobile').addEventListener('click',function(){clip($('prompt-text').textContent,$('copy-mobile'));});
+  $('acc-btn-variants').addEventListener('click',function(){$('body-variants').classList.toggle('open');$('chev-variants').classList.toggle('open');});
+  $('acc-btn-rationale').addEventListener('click',function(){$('body-rationale').classList.toggle('open');$('chev-rationale').classList.toggle('open');});
+  $('acc-btn-tips').addEventListener('click',function(){$('body-tips').classList.toggle('open');$('chev-tips').classList.toggle('open');});
+  $('idea').addEventListener('keydown',function(e){if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))doQuick();});
+  applyLang();
+});
+</script>
+</body>
+</html>
