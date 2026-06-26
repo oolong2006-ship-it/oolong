@@ -8,20 +8,23 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0a0a14;
-  --surface: #12122a;
-  --card: #1a1a35;
-  --border: #2a2a50;
-  --primary: #7c6af5;
-  --primary-hover: #6a58e8;
+  --bg: #f4f3ff;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --border: #d8d4f8;
+  --primary: #6d57f0;
+  --primary-hover: #5b45d8;
+  --primary-light: #ede9ff;
   --accent: #f59e0b;
-  --text: #e8e8f0;
-  --muted: #8888aa;
-  --success: #10b981;
-  --danger: #f87171;
-  --danger-bg: #1f1020;
-  --radius: 14px;
-  --radius-sm: 8px;
+  --text: #1c1830;
+  --muted: #6b6b8a;
+  --success: #059669;
+  --danger: #dc2626;
+  --danger-bg: #fff0f0;
+  --shadow: 0 2px 16px rgba(109,87,240,.10);
+  --shadow-lg: 0 8px 40px rgba(109,87,240,.18);
+  --radius: 16px;
+  --radius-sm: 10px;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -43,50 +46,54 @@ nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 24px;
+  padding: 14px 28px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
   z-index: 10;
+  box-shadow: 0 2px 12px rgba(109,87,240,.07);
 }
 .nav-logo {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 17px;
+  color: var(--primary);
 }
 .logo-icon {
-  width: 34px; height: 34px;
-  border-radius: 9px;
-  background: linear-gradient(135deg,#7c6af5,#f59e0b);
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg,#6d57f0,#f59e0b);
   display: grid; place-items: center;
-  font-weight: 700; font-size: 12px; color: #fff;
+  font-weight: 800; font-size: 12px; color: #fff;
   font-family: 'Inter',sans-serif;
+  box-shadow: 0 3px 10px rgba(109,87,240,.4);
 }
 .lang-btn {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--muted);
-  padding: 7px 16px;
+  background: var(--primary-light);
+  border: 1.5px solid var(--border);
+  color: var(--primary);
+  padding: 7px 18px;
   border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 13px;
   font-family: inherit;
+  font-weight: 600;
   transition: all .15s;
 }
-.lang-btn:hover { border-color: var(--primary); color: var(--text); }
+.lang-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
 
 /* ── HERO ── */
 .hero {
   text-align: center;
-  padding: 52px 20px 28px;
+  padding: 52px 20px 24px;
 }
 .hero h1 {
-  font-size: clamp(28px,5vw,42px);
-  font-weight: 700;
-  background: linear-gradient(135deg,#7c6af5 30%,#f59e0b);
+  font-size: clamp(28px,5vw,44px);
+  font-weight: 800;
+  background: linear-gradient(135deg,#6d57f0 30%,#f59e0b 90%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -107,75 +114,80 @@ main {
 /* ── CARD ── */
 .card {
   width: 100%;
-  max-width: 760px;
+  max-width: 780px;
   background: var(--card);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
   border-radius: var(--radius);
-  padding: 24px;
+  padding: 28px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 22px;
+  box-shadow: var(--shadow);
 }
 
 /* ── LABEL ── */
 label, .field-label {
   display: block;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--muted);
   margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
 }
 
 /* ── TEXTAREA ── */
 textarea {
   width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--bg);
+  border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text);
   padding: 14px 16px;
-  font-size: 14px;
+  font-size: 15px;
   font-family: inherit;
   resize: vertical;
   min-height: 120px;
   outline: none;
-  transition: border-color .15s;
+  transition: border-color .15s, box-shadow .15s;
   line-height: 1.7;
 }
-textarea:focus { border-color: var(--primary); }
-textarea::placeholder { color: var(--muted); }
+textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(109,87,240,.12); }
+textarea::placeholder { color: #b0aecf; }
 
 /* ── GRID ROW ── */
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-@media(max-width:540px){ .grid-2 { grid-template-columns: 1fr; } }
+@media(max-width:560px){ .grid-2 { grid-template-columns: 1fr; } }
 
 /* ── MODEL CHIPS ── */
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip {
-  padding: 6px 12px;
+  padding: 7px 14px;
   border-radius: 20px;
-  border: 1px solid var(--border);
-  background: var(--surface);
+  border: 1.5px solid var(--border);
+  background: var(--bg);
   color: var(--muted);
   cursor: pointer;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   font-family: inherit;
   transition: all .15s;
   white-space: nowrap;
+  user-select: none;
 }
-.chip:hover { border-color: var(--primary); color: var(--text); }
+.chip:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
 .chip.active {
   background: var(--primary);
   border-color: var(--primary);
   color: #fff;
+  box-shadow: 0 2px 10px rgba(109,87,240,.3);
 }
 
 /* ── SELECT ── */
 select {
   width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--bg);
+  border: 1.5px solid var(--border);
   color: var(--text);
   padding: 10px 14px;
   border-radius: var(--radius-sm);
@@ -183,37 +195,39 @@ select {
   font-family: inherit;
   outline: none;
   cursor: pointer;
+  transition: border-color .15s;
 }
 select:focus { border-color: var(--primary); }
 
 /* ── API KEY SECTION ── */
 .api-section {
-  background: var(--surface);
-  border: 1px dashed var(--border);
+  background: #fffbf0;
+  border: 1.5px dashed #f59e0b;
   border-radius: var(--radius-sm);
-  padding: 14px 16px;
+  padding: 16px;
   display: none;
-  gap: 8px;
+  gap: 10px;
   flex-direction: column;
 }
 .api-section.visible { display: flex; }
 .api-section p {
-  font-size: 12px;
-  color: var(--muted);
+  font-size: 12.5px;
+  color: #92700a;
   line-height: 1.5;
 }
 .api-section input {
   width: 100%;
-  background: var(--card);
-  border: 1px solid var(--border);
+  background: #fff;
+  border: 1.5px solid #f0d070;
   color: var(--text);
-  padding: 9px 12px;
+  padding: 10px 12px;
   border-radius: var(--radius-sm);
   font-size: 13px;
   font-family: 'JetBrains Mono','Courier New',monospace;
   outline: none;
+  transition: border-color .15s;
 }
-.api-section input:focus { border-color: var(--primary); }
+.api-section input:focus { border-color: var(--accent); }
 
 /* ── BUTTONS ── */
 .btn-row { display: flex; gap: 12px; }
@@ -221,10 +235,10 @@ select:focus { border-color: var(--primary); }
 
 .btn {
   flex: 1;
-  padding: 13px 20px;
+  padding: 14px 20px;
   border-radius: var(--radius-sm);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   font-family: inherit;
   cursor: pointer;
   border: none;
@@ -232,33 +246,39 @@ select:focus { border-color: var(--primary); }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
-.btn-hint { font-size: 11px; font-weight: 400; opacity: .7; }
+.btn-hint { font-size: 11px; font-weight: 400; opacity: .75; }
 
 .btn-quick {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   color: var(--text);
+  box-shadow: var(--shadow);
 }
-.btn-quick:hover:not(:disabled) { border-color: var(--primary); }
+.btn-quick:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); box-shadow: 0 4px 20px rgba(109,87,240,.15); }
+.btn-quick:active:not(:disabled) { transform: scale(.98); }
 
 .btn-ai {
-  background: linear-gradient(135deg,var(--primary),#a855f7);
+  background: linear-gradient(135deg,#6d57f0,#a855f7);
   color: #fff;
-  box-shadow: 0 4px 20px rgba(124,106,245,.3);
+  box-shadow: 0 4px 24px rgba(109,87,240,.35);
 }
-.btn-ai:hover:not(:disabled) { opacity: .9; transform: translateY(-1px); }
+.btn-ai:hover:not(:disabled) { opacity: .92; transform: translateY(-2px); box-shadow: 0 8px 32px rgba(109,87,240,.4); }
+.btn-ai:active:not(:disabled) { transform: translateY(0); }
 
 /* ── ERROR ── */
 .error-msg {
   background: var(--danger-bg);
   color: var(--danger);
-  border: 1px solid rgba(248,113,113,.2);
+  border: 1.5px solid rgba(220,38,38,.2);
   border-radius: var(--radius-sm);
-  padding: 10px 14px;
-  font-size: 13px;
+  padding: 12px 16px;
+  font-size: 13.5px;
+  font-weight: 500;
   display: none;
 }
 .error-msg.visible { display: block; }
@@ -266,64 +286,68 @@ select:focus { border-color: var(--primary); }
 /* ── RESULT CARD ── */
 .result-card {
   width: 100%;
-  max-width: 760px;
+  max-width: 780px;
   background: var(--card);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
   display: none;
   animation: fadeIn .25s ease;
+  box-shadow: var(--shadow-lg);
 }
 .result-card.visible { display: block; }
 
-@keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 
 .result-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
+  padding: 18px 22px;
+  border-bottom: 1.5px solid var(--border);
   flex-wrap: wrap;
   gap: 10px;
+  background: linear-gradient(135deg,#f7f5ff,#fff);
 }
-.result-title { font-weight: 600; font-size: 15px; }
-.badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.result-title { font-weight: 700; font-size: 15px; color: var(--text); }
+.badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
 .badge {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   padding: 3px 10px;
   border-radius: 20px;
 }
-.badge-ai { background: #2e1a5e; color: #a78bfa; }
-.badge-local { background: #14291e; color: #4ade80; }
-.badge-intent { background: var(--surface); color: var(--muted); }
+.badge-ai { background: #ede9ff; color: #6d57f0; }
+.badge-local { background: #d1fae5; color: #065f46; }
+.badge-intent { background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
 
 .btn-reset {
-  background: transparent;
-  border: 1px solid var(--border);
+  background: var(--bg);
+  border: 1.5px solid var(--border);
   color: var(--muted);
-  padding: 6px 14px;
+  padding: 7px 16px;
   border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 12px;
   font-family: inherit;
+  font-weight: 600;
+  transition: all .15s;
 }
-.btn-reset:hover { color: var(--text); }
+.btn-reset:hover { color: var(--primary); border-color: var(--primary); background: var(--primary-light); }
 
 /* ── PROMPT BLOCK ── */
 .prompt-wrap {
-  padding: 20px;
+  padding: 20px 22px;
   position: relative;
 }
 .prompt-block {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: #f8f7ff;
+  border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 16px;
+  padding: 18px 16px;
   font-family: 'JetBrains Mono','Fira Code','Courier New',monospace;
   font-size: 13px;
-  line-height: 1.75;
+  line-height: 1.85;
   white-space: pre-wrap;
   word-break: break-word;
   color: var(--text);
@@ -336,65 +360,65 @@ select:focus { border-color: var(--primary); }
   background: var(--primary);
   color: #fff;
   border: none;
-  padding: 5px 12px;
-  border-radius: 6px;
+  padding: 6px 14px;
+  border-radius: 7px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   font-family: inherit;
   opacity: 0;
   transition: opacity .15s;
 }
 .prompt-block:hover .btn-copy { opacity: 1; }
-.btn-copy.copied { background: #065f46; }
 .btn-copy-mobile {
   display: none;
   width: 100%;
   margin-top: 10px;
-  padding: 10px;
+  padding: 11px;
   background: var(--primary);
   color: #fff;
   border: none;
   border-radius: var(--radius-sm);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   font-family: inherit;
 }
 @media(max-width:600px){ .btn-copy-mobile { display: block; } }
 
 /* ── ACCORDION ── */
-.accordion { border-top: 1px solid var(--border); }
+.accordion { border-top: 1.5px solid var(--border); }
 .accordion-btn {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 13px 20px;
+  padding: 14px 22px;
   background: transparent;
   border: none;
   color: var(--muted);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   font-family: inherit;
   text-align: start;
+  transition: color .15s;
 }
-.accordion-btn:hover { color: var(--text); }
+.accordion-btn:hover { color: var(--primary); }
 .chevron { transition: transform .2s; display: inline-block; font-size: 11px; }
 .chevron.open { transform: rotate(180deg); }
-.accordion-body { padding: 0 20px 16px; display: none; }
+.accordion-body { padding: 0 22px 18px; display: none; }
 .accordion-body.open { display: block; }
 
 /* Variant block */
 .variant-block {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: #f8f7ff;
+  border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 12px;
+  padding: 14px;
   font-family: 'JetBrains Mono',monospace;
   font-size: 12px;
-  line-height: 1.7;
+  line-height: 1.8;
   white-space: pre-wrap;
   word-break: break-word;
   color: var(--text);
@@ -404,14 +428,15 @@ select:focus { border-color: var(--primary); }
 .variant-block:last-child { margin-bottom: 0; }
 .variant-copy {
   position: absolute;
-  top: 6px;
-  inset-inline-end: 6px;
+  top: 8px;
+  inset-inline-end: 8px;
   background: var(--primary);
   color: #fff;
   border: none;
-  padding: 3px 8px;
-  border-radius: 5px;
+  padding: 4px 10px;
+  border-radius: 6px;
   font-size: 10px;
+  font-weight: 700;
   cursor: pointer;
   font-family: inherit;
   opacity: 0;
@@ -420,34 +445,50 @@ select:focus { border-color: var(--primary); }
 .variant-block:hover .variant-copy { opacity: 1; }
 
 /* Rationale */
-.rationale-text { font-size: 13px; line-height: 1.7; color: var(--text); }
+.rationale-text { font-size: 13.5px; line-height: 1.75; color: var(--text); }
 
 /* Tips */
-.tips-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-.tips-list li { display: flex; gap: 8px; font-size: 13px; color: var(--text); }
-.tips-list li::before { content: '•'; color: var(--primary); flex-shrink: 0; }
+.tips-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.tips-list li {
+  display: flex;
+  gap: 10px;
+  font-size: 13.5px;
+  color: var(--text);
+  background: var(--primary-light);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+}
+.tips-list li::before { content: '💡'; flex-shrink: 0; }
 
 /* ── FOOTER ── */
 footer {
   text-align: center;
-  padding: 16px;
+  padding: 18px;
   font-size: 13px;
   color: var(--muted);
-  border-top: 1px solid var(--border);
+  border-top: 1.5px solid var(--border);
+  background: var(--surface);
 }
 
 /* ── LOADER ── */
 .spinner {
   display: inline-block;
-  width: 14px; height: 14px;
-  border: 2px solid rgba(255,255,255,.3);
+  width: 15px; height: 15px;
+  border: 2.5px solid rgba(255,255,255,.4);
   border-top-color: #fff;
   border-radius: 50%;
   animation: spin .7s linear infinite;
   vertical-align: middle;
   margin-inline-end: 6px;
 }
+.spinner-dark {
+  border: 2.5px solid rgba(109,87,240,.3);
+  border-top-color: var(--primary);
+}
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── DIVIDER ── */
+.divider { height: 1.5px; background: var(--border); }
 </style>
 </head>
 <body>
@@ -456,9 +497,9 @@ footer {
 <nav>
   <div class="nav-logo">
     <div class="logo-icon">PF</div>
-    <span id="nav-title">PromptForge</span>
+    <span>PromptForge</span>
   </div>
-  <button class="lang-btn" onclick="toggleLang()" id="lang-btn">English</button>
+  <button class="lang-btn" id="lang-btn">English</button>
 </nav>
 
 <!-- HERO -->
@@ -476,7 +517,7 @@ footer {
     <!-- Idea -->
     <div>
       <label id="lbl-idea">فكرتك</label>
-      <textarea id="idea" rows="5" id="idea"
+      <textarea id="idea" rows="5"
         placeholder="اكتب فكرتك هنا... مثال: أريد برومبت لكتابة مقال عن مستقبل الذكاء الاصطناعي"></textarea>
     </div>
 
@@ -516,11 +557,11 @@ footer {
 
     <!-- Buttons -->
     <div class="btn-row">
-      <button class="btn btn-quick" id="btn-quick" onclick="handleQuick()">
+      <button class="btn btn-quick" id="btn-quick">
         <span id="lbl-quick">⚡ توليد سريع</span>
         <span class="btn-hint" id="hint-quick">مجاني وفوري — بدون AI</span>
       </button>
-      <button class="btn btn-ai" id="btn-ai" onclick="handleAI()">
+      <button class="btn btn-ai" id="btn-ai">
         <span id="lbl-ai">✨ ترقية بالذكاء الاصطناعي</span>
         <span class="btn-hint" id="hint-ai">نتيجة أعمق باستخدام Claude Haiku</span>
       </button>
@@ -532,27 +573,27 @@ footer {
     <div class="result-header">
       <div>
         <div class="result-title" id="lbl-result">البرومبت المُولَّد</div>
-        <div class="badges" style="margin-top:6px">
+        <div class="badges">
           <span class="badge badge-local" id="badge-local" style="display:none"></span>
           <span class="badge badge-ai" id="badge-ai" style="display:none"></span>
           <span class="badge badge-intent" id="badge-intent"></span>
         </div>
       </div>
-      <button class="btn-reset" onclick="resetResult()" id="lbl-new">+ جديد</button>
+      <button class="btn-reset" id="btn-reset" id="lbl-new">+ جديد</button>
     </div>
 
     <!-- Main prompt -->
     <div class="prompt-wrap">
       <div class="prompt-block" id="prompt-out">
-        <button class="btn-copy" id="copy-main" onclick="copyText('prompt-out','copy-main')">نسخ</button>
+        <button class="btn-copy" id="copy-main">نسخ</button>
         <span id="prompt-text"></span>
       </div>
-      <button class="btn-copy-mobile" id="copy-mobile" onclick="copyText('prompt-out','copy-mobile')">نسخ البرومبت</button>
+      <button class="btn-copy-mobile" id="copy-mobile">نسخ البرومبت</button>
     </div>
 
     <!-- Variants (AI only) -->
     <div class="accordion" id="accordion-variants" style="display:none">
-      <button class="accordion-btn" onclick="toggleAccordion('body-variants','chev-variants')">
+      <button class="accordion-btn" id="acc-btn-variants">
         <span id="lbl-variants">البدائل</span>
         <span class="chevron" id="chev-variants">▾</span>
       </button>
@@ -561,7 +602,7 @@ footer {
 
     <!-- Rationale (AI only) -->
     <div class="accordion" id="accordion-rationale" style="display:none">
-      <button class="accordion-btn" onclick="toggleAccordion('body-rationale','chev-rationale')">
+      <button class="accordion-btn" id="acc-btn-rationale">
         <span id="lbl-rationale">لماذا هذا البرومبت فعّال؟</span>
         <span class="chevron" id="chev-rationale">▾</span>
       </button>
@@ -570,7 +611,7 @@ footer {
 
     <!-- Tips (AI only) -->
     <div class="accordion" id="accordion-tips" style="display:none">
-      <button class="accordion-btn" onclick="toggleAccordion('body-tips','chev-tips')">
+      <button class="accordion-btn" id="acc-btn-tips">
         <span id="lbl-tips">نصائح للتحسين</span>
         <span class="chevron" id="chev-tips">▾</span>
       </button>
@@ -587,7 +628,6 @@ footer {
 // PromptForge Engine — pure JavaScript
 // ═══════════════════════════════════════════════════
 
-// ── Intent Classification ──
 const INTENT_KW = {
   writing:     ['write','اكتب','article','مقال','email','رسالة','blog','post','marketing','تسويق','content','محتوى','essay','story','قصة','caption','newsletter','إعلان','copywriting','social media','تغريدة','منشور'],
   coding:      ['code','كود','function','دالة','bug','debug','class','api','script','برمج','implement','refactor','برمجة','algorithm','خوارزمية','component','unit test','sql','endpoint','typescript','python','react','database'],
@@ -601,64 +641,69 @@ const INTENT_KW = {
 };
 
 function classifyIntent(text) {
-  const lower = text.toLowerCase();
-  const scores = {};
-  for (const [intent, kws] of Object.entries(INTENT_KW)) {
+  var lower = text.toLowerCase();
+  var scores = {};
+  for (var intent in INTENT_KW) {
     scores[intent] = 0;
-    for (const kw of kws) {
-      if (lower.includes(kw.toLowerCase())) {
-        scores[intent] += kw.includes(' ') ? 3 : kw.length > 5 ? 2 : 1;
+    var kws = INTENT_KW[intent];
+    for (var i = 0; i < kws.length; i++) {
+      var kw = kws[i];
+      if (lower.indexOf(kw.toLowerCase()) !== -1) {
+        scores[intent] += kw.indexOf(' ') !== -1 ? 3 : kw.length > 5 ? 2 : 1;
       }
     }
   }
-  const sorted = Object.entries(scores).sort((a,b)=>b[1]-a[1]);
-  return sorted[0][1] > 0 ? sorted[0][0] : 'writing';
+  var best = 'writing', bestScore = 0;
+  for (var k in scores) {
+    if (scores[k] > bestScore) { bestScore = scores[k]; best = k; }
+  }
+  return best;
 }
 
 function detectLanguage(text) {
-  const ar = (text.match(/[؀-ۿ]/g)||[]).length;
-  const all = (text.match(/[a-zA-Z؀-ۿ]/g)||[]).length;
-  return all === 0 ? 'en' : ar/all > 0.5 ? 'ar' : 'en';
+  var ar = (text.match(/[؀-ۿ]/g) || []).length;
+  var all = (text.match(/[a-zA-Z؀-ۿ]/g) || []).length;
+  return all === 0 ? 'en' : ar / all > 0.5 ? 'ar' : 'en';
 }
 
 // ── Adapters ──
 function adaptClaude(slots) {
-  const p = [];
-  if (slots.role) p.push(`<role>\n${slots.role}\n</role>`);
-  p.push(`<task>\n${slots.objective}\n</task>`);
-  if (slots.context) p.push(`<context>\n${slots.context}\n</context>`);
-  if (slots.constraints?.length) p.push(`<constraints>\n${slots.constraints.map(c=>'- '+c).join('\n')}\n</constraints>`);
-  if (slots.tone) p.push(`<tone>${slots.tone}</tone>`);
-  if (slots.outputFormat) p.push(`<output_format>\n${slots.outputFormat}\n</output_format>`);
-  if (slots.reasoning) p.push(`<thinking>\nفكّر خطوة بخطوة قبل الإجابة. اعرض منطقك بوضوح.\n</thinking>`);
+  var p = [];
+  if (slots.role) p.push('<role>\n' + slots.role + '\n</role>');
+  p.push('<task>\n' + slots.objective + '\n</task>');
+  if (slots.context) p.push('<context>\n' + slots.context + '\n</context>');
+  if (slots.constraints && slots.constraints.length) p.push('<constraints>\n' + slots.constraints.map(function(c){ return '- ' + c; }).join('\n') + '\n</constraints>');
+  if (slots.tone) p.push('<tone>' + slots.tone + '</tone>');
+  if (slots.outputFormat) p.push('<output_format>\n' + slots.outputFormat + '\n</output_format>');
+  if (slots.reasoning) p.push('<thinking>\nفكّر خطوة بخطوة قبل الإجابة. اعرض منطقك بوضوح.\n</thinking>');
   return p.join('\n\n');
 }
 
 function adaptOpenAI(slots) {
-  const s = [];
-  if (slots.role) s.push(`# Role\n${slots.role}`);
-  s.push(`# Task\n${slots.objective}`);
-  if (slots.context) s.push(`# Context\n${slots.context}`);
-  if (slots.constraints?.length) s.push(`# Constraints\n${slots.constraints.map(c=>'- '+c).join('\n')}`);
-  if (slots.tone) s.push(`# Tone\n${slots.tone}`);
-  if (slots.outputFormat) s.push(`# Output Format\n${slots.outputFormat}`);
-  if (slots.reasoning) s.push(`# Instructions\n1. Think step by step before answering.\n2. Show your reasoning explicitly.\n3. Verify your conclusion.`);
+  var s = [];
+  if (slots.role) s.push('# Role\n' + slots.role);
+  s.push('# Task\n' + slots.objective);
+  if (slots.context) s.push('# Context\n' + slots.context);
+  if (slots.constraints && slots.constraints.length) s.push('# Constraints\n' + slots.constraints.map(function(c){ return '- ' + c; }).join('\n'));
+  if (slots.tone) s.push('# Tone\n' + slots.tone);
+  if (slots.outputFormat) s.push('# Output Format\n' + slots.outputFormat);
+  if (slots.reasoning) s.push('# Instructions\n1. Think step by step before answering.\n2. Show your reasoning explicitly.\n3. Verify your conclusion.');
   return s.join('\n\n');
 }
 
 function adaptMidjourney(slots) {
-  const parts = [slots.objective, slots.context, slots.tone, 'highly detailed', 'cinematic lighting', 'professional photography'].filter(Boolean);
-  return `/imagine ${parts.join(', ')} --ar 16:9 --v 6 --style raw --q 1`;
+  var parts = [slots.objective, slots.context, slots.tone, 'highly detailed', 'cinematic lighting', 'professional photography'].filter(Boolean);
+  return '/imagine ' + parts.join(', ') + ' --ar 16:9 --v 6 --style raw --q 1';
 }
 
 function adaptSD(slots) {
-  const pos = [slots.objective, slots.context, slots.tone, 'masterpiece','best quality','highly detailed','8k resolution','sharp focus'].filter(Boolean).join(', ');
-  const neg = 'blurry, low quality, distorted, deformed, ugly, watermark, text, signature, artifacts';
-  return `**Positive prompt:**\n${pos}\n\n**Negative prompt:**\n${neg}\n\n**Parameters:** Steps: 30 | CFG: 7 | Size: 768×512 | Sampler: DPM++ 2M Karras`;
+  var pos = [slots.objective, slots.context, slots.tone, 'masterpiece', 'best quality', 'highly detailed', '8k resolution', 'sharp focus'].filter(Boolean).join(', ');
+  var neg = 'blurry, low quality, distorted, deformed, ugly, watermark, text, signature, artifacts';
+  return '**Positive prompt:**\n' + pos + '\n\n**Negative prompt:**\n' + neg + '\n\n**Parameters:** Steps: 30 | CFG: 7 | Size: 768×512 | Sampler: DPM++ 2M Karras';
 }
 
 // ── Roles & Formats ──
-const ROLES = {
+var ROLES = {
   writing:     { ar:'أنت كاتب محترف متخصص في إنتاج محتوى إبداعي وفعّال يترك أثراً في القارئ', en:'You are a professional writer specializing in compelling, high-impact content that resonates with readers' },
   coding:      { ar:'أنت مهندس برمجيات خبير بأكثر من 10 سنوات من الخبرة، متخصص في كتابة كود نظيف قابل للصيانة', en:'You are a senior software engineer with 10+ years of experience, specializing in clean, maintainable, and efficient code' },
   image:       { ar:'', en:'' },
@@ -670,19 +715,19 @@ const ROLES = {
   translation: { ar:'أنت مترجم محترف متخصص في الترجمة الدقيقة مع مراعاة الفروق الثقافية', en:'You are a professional translator specializing in accurate translation that preserves nuance and cultural context' },
 };
 
-const FORMATS = {
+var FORMATS = {
   writing:     { ar:'اكتب النص بشكل منظم. استخدم عناوين فرعية إذا لزم. لغة سلسة وجذابة تناسب الجمهور المستهدف.', en:'Write in an organized, flowing structure. Use subheadings for longer content. Smooth and engaging language.' },
   coding:      { ar:'قدّم الكود داخل code block مع تعليقات توضيحية. اشرح منطق الحل بإيجاز قبل وبعد الكود.', en:'Present code in a formatted code block with brief inline comments. Explain the solution logic before and after.' },
   image:       { ar:'', en:'' },
   analysis:    { ar:'ملخص تنفيذي أولاً، ثم التحليل التفصيلي في نقاط واضحة، ختام بالتوصيات.', en:'Executive summary first, then detailed analysis in clear points, concluding with actionable recommendations.' },
   agent:       { ar:'تعليمات واضحة وشاملة تغطي: هوية المساعد، نطاق عمله، أسلوب التعامل، القيود، أمثلة على الردود.', en:'Clear instructions covering: assistant identity, scope, interaction style, boundaries, and example responses.' },
   reasoning:   { ar:'اعرض تفكيرك خطوة بخطوة قبل الإجابة النهائية. وضّح افتراضاتك وأثبت استنتاجاتك.', en:'Show your thinking step by step before the final answer. State assumptions and prove conclusions explicitly.' },
-  roleplay:    { ar:'ابق في الشخصية طوال المحادثة. ردود نابعة من منطق الشخصية وتجاربها.', en:'Stay in character throughout. Responses from the character\'s own logic and experiences.' },
+  roleplay:    { ar:'ابق في الشخصية طوال المحادثة. ردود نابعة من منطق الشخصية وتجاربها.', en:"Stay in character throughout. Responses from the character's own logic and experiences." },
   education:   { ar:'اشرح تدريجياً من البسيط للمعقد. استخدم تشبيهات من الحياة اليومية وأمثلة عملية.', en:'Explain progressively from simple to complex. Use everyday analogies and practical examples.' },
   translation: { ar:'ترجمة طبيعية تراعي السياق والفروق الثقافية. اهتم بالمعنى والأسلوب لا بالترجمة الحرفية.', en:'Natural translation considering context and cultural nuances. Focus on meaning and style.' },
 };
 
-const TONES = {
+var TONES = {
   writing:     { ar:'احترافي وجذاب', en:'Professional and engaging' },
   coding:      { ar:'تقني ودقيق', en:'Technical and precise' },
   image:       { ar:'سينمائي وحيوي', en:'Cinematic, vibrant' },
@@ -694,7 +739,7 @@ const TONES = {
   translation: { ar:'أمين للمعنى', en:'Faithful to the original' },
 };
 
-const INTENT_SLOTS = {
+var INTENT_SLOTS = {
   writing:     ['role','objective','context','tone','constraints','outputFormat'],
   coding:      ['role','objective','context','constraints','outputFormat','reasoning'],
   image:       ['objective','context','tone'],
@@ -707,31 +752,29 @@ const INTENT_SLOTS = {
 };
 
 function buildLocalPrompt(idea, targetModel, outLang) {
-  const lang = outLang || detectLanguage(idea);
-  const intent = classifyIntent(idea);
-  const relevant = INTENT_SLOTS[intent] || INTENT_SLOTS.writing;
+  var lang = outLang || detectLanguage(idea);
+  var intent = classifyIntent(idea);
+  var relevant = INTENT_SLOTS[intent] || INTENT_SLOTS.writing;
+  var slots = { objective: idea };
+  if (relevant.indexOf('role') !== -1 && ROLES[intent] && ROLES[intent][lang]) slots.role = ROLES[intent][lang];
+  if (relevant.indexOf('outputFormat') !== -1 && FORMATS[intent] && FORMATS[intent][lang]) slots.outputFormat = FORMATS[intent][lang];
+  if (relevant.indexOf('tone') !== -1 && TONES[intent] && TONES[intent][lang]) slots.tone = TONES[intent][lang];
+  if (relevant.indexOf('reasoning') !== -1) slots.reasoning = true;
 
-  const slots = { objective: idea };
-  if (relevant.includes('role') && ROLES[intent]?.[lang]) slots.role = ROLES[intent][lang];
-  if (relevant.includes('outputFormat') && FORMATS[intent]?.[lang]) slots.outputFormat = FORMATS[intent][lang];
-  if (relevant.includes('tone') && TONES[intent]?.[lang]) slots.tone = TONES[intent][lang];
-  if (relevant.includes('reasoning')) slots.reasoning = true;
-
-  let prompt;
-  switch(targetModel) {
-    case 'claude':    prompt = adaptClaude(slots);    break;
+  var prompt;
+  switch (targetModel) {
+    case 'claude':           prompt = adaptClaude(slots); break;
     case 'openai':
-    case 'gemini':    prompt = adaptOpenAI(slots);    break;
-    case 'midjourney': prompt = adaptMidjourney(slots); break;
+    case 'gemini':           prompt = adaptOpenAI(slots); break;
+    case 'midjourney':       prompt = adaptMidjourney(slots); break;
     case 'dalle':
-    case 'stablediffusion': prompt = adaptSD(slots); break;
-    default:          prompt = adaptClaude(slots);
+    case 'stablediffusion':  prompt = adaptSD(slots); break;
+    default:                 prompt = adaptClaude(slots);
   }
-  return { prompt, intent, lang };
+  return { prompt: prompt, intent: intent, lang: lang };
 }
 
-// ── Meta-Prompt ──
-const MODEL_INST = {
+var MODEL_INST = {
   claude: 'Use XML structural tags: <role>, <task>, <context>, <constraints>, <output_format>, <thinking>.',
   openai: 'Use Markdown headers (# Role, # Task, # Context, # Output Format). Numbered steps for instructions.',
   gemini: 'Be detailed and context-rich. Provide comprehensive background before the main ask.',
@@ -741,39 +784,19 @@ const MODEL_INST = {
 };
 
 function buildMetaPrompt(idea, intent, targetModel, outLang) {
-  return `You are a world-class prompt engineer. Transform this raw idea into a professional prompt optimized for the target model.
-
-<user_idea>${idea}</user_idea>
-<intent>${intent}</intent>
-<target_model>${targetModel}</target_model>
-<output_language>${outLang}</output_language>
-<model_instructions>${MODEL_INST[targetModel] || MODEL_INST.claude}</model_instructions>
-
-Rules:
-1. Write the final prompt ENTIRELY in ${outLang}.
-2. Apply the structural style from model_instructions exactly.
-3. Fill ALL relevant slots: role, objective, context, constraints, output format, tone, reasoning.
-4. Infer missing information intelligently — never leave slots empty.
-5. Make it copy-pasteable and production-ready.
-
-Return ONLY valid JSON (no code fences, no extra text):
-{
-  "prompt": "<complete professional prompt in ${outLang}>",
-  "variants": ["<shorter variant>", "<more creative variant>"],
-  "rationale": "<2-3 sentences on why this prompt is effective, in ${outLang}>",
-  "tips": ["<actionable tip>", "<another tip>"]
-}`;
+  var inst = MODEL_INST[targetModel] || MODEL_INST.claude;
+  return 'You are a world-class prompt engineer. Transform this raw idea into a professional prompt optimized for the target model.\n\n<user_idea>' + idea + '</user_idea>\n<intent>' + intent + '</intent>\n<target_model>' + targetModel + '</target_model>\n<output_language>' + outLang + '</output_language>\n<model_instructions>' + inst + '</model_instructions>\n\nRules:\n1. Write the final prompt ENTIRELY in ' + outLang + '.\n2. Apply the structural style from model_instructions exactly.\n3. Fill ALL relevant slots: role, objective, context, constraints, output format, tone, reasoning.\n4. Infer missing information intelligently — never leave slots empty.\n5. Make it copy-pasteable and production-ready.\n\nReturn ONLY valid JSON (no code fences, no extra text):\n{\n  "prompt": "<complete professional prompt in ' + outLang + '>",\n  "variants": ["<shorter variant>", "<more creative variant>"],\n  "rationale": "<2-3 sentences on why this prompt is effective, in ' + outLang + '>",\n  "tips": ["<actionable tip>", "<another tip>"]\n}';
 }
 
 // ═══════════════════════════════════════════════════
-// UI State
+// UI
 // ═══════════════════════════════════════════════════
-let currentLang = 'ar';
-let selectedModel = 'claude';
-let loading = false;
 
-// ── Language strings ──
-const UI = {
+var currentLang = 'ar';
+var selectedModel = 'claude';
+var isLoading = false;
+
+var UI = {
   ar: {
     tagline: 'حوّل فكرتك إلى برومبت احترافي',
     langBtn: 'English',
@@ -786,22 +809,22 @@ const UI = {
     hintQuick: 'مجاني وفوري — بدون AI',
     ai: '✨ ترقية بالذكاء الاصطناعي',
     hintAi: 'نتيجة أعمق باستخدام Claude Haiku',
-    generating: '⏳ جاري التوليد...',
-    upgrading: '⏳ جاري الترقية...',
+    generating: 'جاري التوليد...',
+    upgrading: 'جاري الترقية...',
     errEmpty: 'الرجاء إدخال فكرتك أولاً',
-    errApi: 'أدخل مفتاح API أولاً',
+    errApi: 'أدخل مفتاح API أولاً (اضغط "✨ ترقية" مرة أخرى بعد إدخاله)',
     errFail: 'حدث خطأ. تأكد من صحة مفتاح API.',
     resultTitle: 'البرومبت المُولَّد',
-    badgeLocal: 'توليد محلي',
-    badgeAi: 'مُحسَّن بـ Claude',
+    badgeLocal: '⚡ توليد محلي',
+    badgeAi: '✨ مُحسَّن بـ Claude',
     copy: 'نسخ',
-    copied: '✓ تم',
+    copied: '✓ تم النسخ',
     newBtn: '+ جديد',
-    variants: 'البدائل',
-    rationale: 'لماذا هذا البرومبت فعّال؟',
-    tips: 'نصائح للتحسين',
+    variants: '📋 البدائل',
+    rationale: '🎯 لماذا هذا البرومبت فعّال؟',
+    tips: '💡 نصائح للتحسين',
     footer: 'مبني بـ ❤️ و Claude',
-    intents: { writing:'كتابة', coding:'برمجة', image:'صورة', analysis:'تحليل', agent:'وكيل AI', reasoning:'استدلال', roleplay:'تمثيل أدوار', education:'تعليم', translation:'ترجمة' },
+    intents: { writing:'✍️ كتابة', coding:'💻 برمجة', image:'🎨 صورة', analysis:'📊 تحليل', agent:'🤖 وكيل AI', reasoning:'🧠 استدلال', roleplay:'🎭 تمثيل أدوار', education:'📚 تعليم', translation:'🌐 ترجمة' },
   },
   en: {
     tagline: 'Transform your idea into a professional prompt',
@@ -815,251 +838,280 @@ const UI = {
     hintQuick: 'Free & instant — no AI call',
     ai: '✨ AI Upgrade',
     hintAi: 'Deeper result using Claude Haiku',
-    generating: '⏳ Generating...',
-    upgrading: '⏳ Upgrading...',
+    generating: 'Generating...',
+    upgrading: 'Upgrading...',
     errEmpty: 'Please enter your idea first',
-    errApi: 'Please enter your API key first',
+    errApi: 'Please enter your API key first (click AI Upgrade again after entering it)',
     errFail: 'Error occurred. Check your API key.',
     resultTitle: 'Generated Prompt',
-    badgeLocal: 'Local Generation',
-    badgeAi: 'AI Enhanced',
+    badgeLocal: '⚡ Local Generation',
+    badgeAi: '✨ AI Enhanced',
     copy: 'Copy',
-    copied: '✓ Copied',
+    copied: '✓ Copied!',
     newBtn: '+ New',
-    variants: 'Variants',
-    rationale: 'Why is this prompt effective?',
-    tips: 'Tips for Improvement',
+    variants: '📋 Variants',
+    rationale: '🎯 Why is this prompt effective?',
+    tips: '💡 Tips for Improvement',
     footer: 'Built with ❤️ and Claude',
-    intents: { writing:'Writing', coding:'Coding', image:'Image', analysis:'Analysis', agent:'AI Agent', reasoning:'Reasoning', roleplay:'Roleplay', education:'Education', translation:'Translation' },
+    intents: { writing:'✍️ Writing', coding:'💻 Coding', image:'🎨 Image', analysis:'📊 Analysis', agent:'🤖 AI Agent', reasoning:'🧠 Reasoning', roleplay:'🎭 Roleplay', education:'📚 Education', translation:'🌐 Translation' },
   },
 };
 
 function t(key) { return UI[currentLang][key] || key; }
 
+function $(id) { return document.getElementById(id); }
+
 function applyLang() {
-  const u = UI[currentLang];
+  var u = UI[currentLang];
   document.documentElement.lang = currentLang;
   document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
-  document.getElementById('tagline').textContent = u.tagline;
-  document.getElementById('lang-btn').textContent = u.langBtn;
-  document.getElementById('lbl-idea').textContent = u.lblIdea;
-  document.getElementById('idea').placeholder = u.placeholder;
-  document.getElementById('lbl-model').textContent = u.lblModel;
-  document.getElementById('lbl-lang').textContent = u.lblLang;
-  document.getElementById('api-hint').textContent = u.apiHint;
-  document.getElementById('lbl-quick').textContent = u.quick;
-  document.getElementById('hint-quick').textContent = u.hintQuick;
-  document.getElementById('lbl-ai').textContent = u.ai;
-  document.getElementById('hint-ai').textContent = u.hintAi;
-  document.getElementById('lbl-result').textContent = u.resultTitle;
-  document.getElementById('lbl-new').textContent = u.newBtn;
-  document.getElementById('lbl-variants').textContent = u.variants;
-  document.getElementById('lbl-rationale').textContent = u.rationale;
-  document.getElementById('lbl-tips').textContent = u.tips;
-  document.getElementById('footer-text').textContent = u.footer;
-  document.getElementById('badge-local').textContent = u.badgeLocal;
-  document.getElementById('badge-ai').textContent = u.badgeAi;
-  document.getElementById('copy-main').textContent = u.copy;
-  document.getElementById('copy-mobile').textContent = u.copy;
+  $('tagline').textContent = u.tagline;
+  $('lang-btn').textContent = u.langBtn;
+  $('lbl-idea').textContent = u.lblIdea;
+  $('idea').placeholder = u.placeholder;
+  $('lbl-model').textContent = u.lblModel;
+  $('lbl-lang').textContent = u.lblLang;
+  $('api-hint').textContent = u.apiHint;
+  $('lbl-quick').textContent = u.quick;
+  $('hint-quick').textContent = u.hintQuick;
+  $('lbl-ai').textContent = u.ai;
+  $('hint-ai').textContent = u.hintAi;
+  $('lbl-result').textContent = u.resultTitle;
+  $('lbl-new').textContent = u.newBtn;
+  $('lbl-variants').textContent = u.variants;
+  $('lbl-rationale').textContent = u.rationale;
+  $('lbl-tips').textContent = u.tips;
+  $('footer-text').textContent = u.footer;
+  $('badge-local').textContent = u.badgeLocal;
+  $('badge-ai').textContent = u.badgeAi;
+  $('copy-main').textContent = u.copy;
+  $('copy-mobile').textContent = u.copy;
 }
 
-function toggleLang() {
-  currentLang = currentLang === 'ar' ? 'en' : 'ar';
-  applyLang();
-}
-
-// ── Model chips ──
-document.getElementById('model-chips').addEventListener('click', e => {
-  const chip = e.target.closest('.chip');
-  if (!chip) return;
-  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-  chip.classList.add('active');
-  selectedModel = chip.dataset.model;
-  // Show API section hint when AI-relevant model selected
-});
-
-// ── Accordion ──
-function toggleAccordion(bodyId, chevId) {
-  const body = document.getElementById(bodyId);
-  const chev = document.getElementById(chevId);
-  body.classList.toggle('open');
-  chev.classList.toggle('open');
-}
-
-// ── Copy ──
-function copyText(containerId, btnId) {
-  const text = document.getElementById('prompt-text').textContent;
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = document.getElementById(btnId);
-    const orig = btn.textContent;
-    btn.textContent = t('copied');
-    btn.style.background = '#065f46';
-    setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 2000);
-  });
-}
-
-// ── Error ──
 function showError(msg) {
-  const el = document.getElementById('error-msg');
+  var el = $('error-msg');
   el.textContent = msg;
   el.classList.add('visible');
 }
-function clearError() { document.getElementById('error-msg').classList.remove('visible'); }
+function clearError() { $('error-msg').classList.remove('visible'); }
 
-// ── Loading state ──
-function setLoading(isLoading, isAI) {
-  loading = isLoading;
-  const qBtn = document.getElementById('btn-quick');
-  const aBtn = document.getElementById('btn-ai');
-  qBtn.disabled = isLoading;
-  aBtn.disabled = isLoading;
-  if (isLoading) {
+function setLoading(on, isAI) {
+  isLoading = on;
+  $('btn-quick').disabled = on;
+  $('btn-ai').disabled = on;
+  if (on) {
     if (isAI) {
-      document.getElementById('lbl-ai').innerHTML = `<span class="spinner"></span>${t('upgrading')}`;
+      $('lbl-ai').innerHTML = '<span class="spinner"></span>' + t('upgrading');
     } else {
-      document.getElementById('lbl-quick').innerHTML = `<span class="spinner"></span>${t('generating')}`;
+      $('lbl-quick').innerHTML = '<span class="spinner spinner-dark"></span>' + t('generating');
     }
   } else {
-    document.getElementById('lbl-quick').textContent = t('quick');
-    document.getElementById('lbl-ai').textContent = t('ai');
+    $('lbl-quick').textContent = t('quick');
+    $('lbl-ai').textContent = t('ai');
   }
-}
-
-// ── Show result ──
-function showResult(data, isAI) {
-  const u = UI[currentLang];
-  document.getElementById('prompt-text').textContent = data.prompt;
-
-  // Badges
-  document.getElementById('badge-local').style.display = isAI ? 'none' : 'inline';
-  document.getElementById('badge-ai').style.display = isAI ? 'inline' : 'none';
-  document.getElementById('badge-intent').textContent = u.intents[data.intent] || data.intent;
-
-  // AI extras
-  const hasVariants = isAI && data.variants?.length;
-  const hasRationale = isAI && data.rationale;
-  const hasTips = isAI && data.tips?.length;
-
-  document.getElementById('accordion-variants').style.display = hasVariants ? 'block' : 'none';
-  document.getElementById('accordion-rationale').style.display = hasRationale ? 'block' : 'none';
-  document.getElementById('accordion-tips').style.display = hasTips ? 'block' : 'none';
-
-  if (hasVariants) {
-    document.getElementById('body-variants').innerHTML = data.variants.map((v,i) => `
-      <div class="variant-block">
-        ${escHtml(v)}
-        <button class="variant-copy" onclick="copyVariant(this,'${escAttr(v)}')">${u.copy}</button>
-      </div>`).join('');
-  }
-
-  if (hasRationale) {
-    document.getElementById('body-rationale').innerHTML = `<p class="rationale-text">${escHtml(data.rationale)}</p>`;
-  }
-
-  if (hasTips) {
-    document.getElementById('body-tips').innerHTML = `<ul class="tips-list">${data.tips.map(tip=>`<li>${escHtml(tip)}</li>`).join('')}</ul>`;
-  }
-
-  document.getElementById('result-card').classList.add('visible');
-  document.getElementById('result-card').scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
-function escAttr(s) {
-  return String(s).replace(/'/g,'&#39;').replace(/"/g,'&quot;');
+
+function copyToClipboard(text, btn, label) {
+  var orig = btn.textContent;
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(function() {
+      btn.textContent = label || t('copied');
+      setTimeout(function(){ btn.textContent = orig; }, 2000);
+    });
+  } else {
+    // Fallback for file:// or older browsers
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(ta);
+    btn.textContent = label || t('copied');
+    setTimeout(function(){ btn.textContent = orig; }, 2000);
+  }
 }
 
-function copyVariant(btn, text) {
-  navigator.clipboard.writeText(text).then(() => {
-    const orig = btn.textContent;
-    btn.textContent = UI[currentLang].copied;
-    btn.style.background = '#065f46';
-    setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 2000);
-  });
+function showResult(data, isAI) {
+  var u = UI[currentLang];
+  $('prompt-text').textContent = data.prompt;
+
+  $('badge-local').style.display = isAI ? 'none' : 'inline';
+  $('badge-ai').style.display = isAI ? 'inline' : 'none';
+  $('badge-intent').textContent = u.intents[data.intent] || data.intent;
+
+  var hasVariants = isAI && data.variants && data.variants.length;
+  var hasRationale = isAI && data.rationale;
+  var hasTips = isAI && data.tips && data.tips.length;
+
+  $('accordion-variants').style.display = hasVariants ? 'block' : 'none';
+  $('accordion-rationale').style.display = hasRationale ? 'block' : 'none';
+  $('accordion-tips').style.display = hasTips ? 'block' : 'none';
+
+  if (hasVariants) {
+    $('body-variants').innerHTML = data.variants.map(function(v) {
+      return '<div class="variant-block"><span>' + escHtml(v) + '</span><button class="variant-copy" data-text="' + escHtml(v).replace(/"/g,'&quot;') + '">' + u.copy + '</button></div>';
+    }).join('');
+    // Attach copy events for variants
+    var vCopies = $('body-variants').querySelectorAll('.variant-copy');
+    for (var i = 0; i < vCopies.length; i++) {
+      (function(btn) {
+        btn.addEventListener('click', function() {
+          copyToClipboard(btn.getAttribute('data-text'), btn, u.copied);
+        });
+      })(vCopies[i]);
+    }
+  }
+
+  if (hasRationale) {
+    $('body-rationale').innerHTML = '<p class="rationale-text">' + escHtml(data.rationale) + '</p>';
+  }
+
+  if (hasTips) {
+    $('body-tips').innerHTML = '<ul class="tips-list">' + data.tips.map(function(tip){ return '<li>' + escHtml(tip) + '</li>'; }).join('') + '</ul>';
+  }
+
+  $('result-card').classList.add('visible');
+  setTimeout(function() {
+    $('result-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 50);
 }
 
 function resetResult() {
-  document.getElementById('result-card').classList.remove('visible');
-  document.getElementById('idea').focus();
+  $('result-card').classList.remove('visible');
+  $('idea').focus();
 }
 
-// ── Quick Generate ──
 function handleQuick() {
   clearError();
-  const idea = document.getElementById('idea').value.trim();
+  var idea = $('idea').value.trim();
   if (!idea) { showError(t('errEmpty')); return; }
-  const outLang = document.getElementById('out-lang').value;
-
+  var outLang = $('out-lang').value;
   setLoading(true, false);
-  setTimeout(() => {
+  setTimeout(function() {
     try {
-      const result = buildLocalPrompt(idea, selectedModel, outLang);
+      var result = buildLocalPrompt(idea, selectedModel, outLang);
       showResult(result, false);
     } catch(e) {
-      showError(e.message);
+      showError(e.message || String(e));
     }
     setLoading(false, false);
   }, 10);
 }
 
-// ── AI Upgrade ──
-async function handleAI() {
+function handleAI() {
   clearError();
-  const idea = document.getElementById('idea').value.trim();
+  var idea = $('idea').value.trim();
   if (!idea) { showError(t('errEmpty')); return; }
 
-  // Show API key section if not visible
-  const apiSection = document.getElementById('api-section');
+  var apiSection = $('api-section');
   apiSection.classList.add('visible');
-  const apiKey = document.getElementById('api-key').value.trim();
+
+  var apiKey = $('api-key').value.trim();
   if (!apiKey) {
-    document.getElementById('api-key').focus();
+    $('api-key').focus();
     showError(t('errApi'));
     return;
   }
 
-  const outLang = document.getElementById('out-lang').value;
-  const intent = classifyIntent(idea);
-  const metaPrompt = buildMetaPrompt(idea, intent, selectedModel, outLang);
+  var outLang = $('out-lang').value;
+  var intent = classifyIntent(idea);
+  var metaPrompt = buildMetaPrompt(idea, intent, selectedModel, outLang);
 
   setLoading(true, true);
-  clearError();
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-allow-browser': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 2048,
-        messages: [{ role:'user', content: metaPrompt }],
-      }),
-    });
 
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-allow-browser': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 2048,
+      messages: [{ role: 'user', content: metaPrompt }],
+    }),
+  }).then(function(res) {
     if (!res.ok) {
-      const err = await res.json().catch(()=>({}));
-      throw new Error(err.error?.message || `HTTP ${res.status}`);
+      return res.json().catch(function(){ return {}; }).then(function(err) {
+        throw new Error(err.error ? err.error.message : 'HTTP ' + res.status);
+      });
     }
-
-    const msg = await res.json();
-    const rawText = msg.content.filter(b=>b.type==='text').map(b=>b.text).join('');
-    const clean = rawText.replace(/^```(?:json)?\s*/m,'').replace(/\s*```$/m,'').trim();
-    const data = JSON.parse(clean);
-    showResult({ ...data, intent, lang: outLang }, true);
-  } catch(e) {
-    showError(`${t('errFail')} — ${e.message}`);
-  }
-  setLoading(false, true);
+    return res.json();
+  }).then(function(msg) {
+    var rawText = msg.content.filter(function(b){ return b.type === 'text'; }).map(function(b){ return b.text; }).join('');
+    var clean = rawText.replace(/^```(?:json)?\s*/m, '').replace(/\s*```$/m, '').trim();
+    var data = JSON.parse(clean);
+    showResult(Object.assign({}, data, { intent: intent, lang: outLang }), true);
+    setLoading(false, true);
+  }).catch(function(e) {
+    showError(t('errFail') + ' — ' + (e.message || String(e)));
+    setLoading(false, true);
+  });
 }
 
-// ── Init ──
-applyLang();
+// ── Wire up events after DOM is ready ──
+document.addEventListener('DOMContentLoaded', function() {
+  // Language toggle
+  $('lang-btn').addEventListener('click', function() {
+    currentLang = currentLang === 'ar' ? 'en' : 'ar';
+    applyLang();
+  });
+
+  // Model chips
+  $('model-chips').addEventListener('click', function(e) {
+    var chip = e.target.closest('.chip');
+    if (!chip) return;
+    document.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('active'); });
+    chip.classList.add('active');
+    selectedModel = chip.dataset.model;
+  });
+
+  // Generate buttons
+  $('btn-quick').addEventListener('click', handleQuick);
+  $('btn-ai').addEventListener('click', handleAI);
+
+  // Reset button
+  $('btn-reset').addEventListener('click', resetResult);
+
+  // Copy main prompt
+  $('copy-main').addEventListener('click', function() {
+    copyToClipboard($('prompt-text').textContent, $('copy-main'), t('copied'));
+  });
+  $('copy-mobile').addEventListener('click', function() {
+    copyToClipboard($('prompt-text').textContent, $('copy-mobile'), t('copied'));
+  });
+
+  // Accordions
+  $('acc-btn-variants').addEventListener('click', function() {
+    $('body-variants').classList.toggle('open');
+    $('chev-variants').classList.toggle('open');
+  });
+  $('acc-btn-rationale').addEventListener('click', function() {
+    $('body-rationale').classList.toggle('open');
+    $('chev-rationale').classList.toggle('open');
+  });
+  $('acc-btn-tips').addEventListener('click', function() {
+    $('body-tips').classList.toggle('open');
+    $('chev-tips').classList.toggle('open');
+  });
+
+  // Enter key in textarea triggers quick generate
+  $('idea').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      handleQuick();
+    }
+  });
+
+  applyLang();
+});
 </script>
 </body>
 </html>
