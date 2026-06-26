@@ -1,3 +1,27 @@
+# Oolong — Restaurant Management Platform Suite
+
+## Restaurant Profit OS (نظام تشغيل الربحية للمطاعم)
+
+A production-grade SaaS platform for restaurant profitability management. Built with Next.js 14 App Router, Prisma, PostgreSQL, and shadcn/ui.
+
+**Location:** `/profit-os/`
+
+**Key Features:**
+- Multi-tenant architecture with role-based access control (12 roles)
+- Real-time profitability analytics per branch and delivery platform
+- Procurement management with supplier scorecards and price variance tracking
+- Inventory control with recipe costing and menu engineering (BCG matrix)
+- Waste tracking and reduction recommendations
+- Data import from POS systems and delivery platforms (Excel/CSV)
+- AI-generated actionable recommendations
+- Full Arabic/English bilingual support (RTL-first)
+
+**Tech Stack:** Next.js 14, TypeScript, Prisma ORM, PostgreSQL, NextAuth, shadcn/ui, Recharts, Zod
+
+**Quick Start:** See `/profit-os/README.md`
+
+---
+
 # 🛡️ نظام سلامة الغذاء و GMP — منصة إدارة الجودة والتفتيش
 
 تطبيق ويب احترافي لفِرق الجودة وسلامة الغذاء وممارسات التصنيع الجيدة (GMP) في **المطاعم والكافيهات والمصانع الغذائية** الخاضعة للتفتيش والرقابة (هيئة الغذاء والدواء / البلديات).
