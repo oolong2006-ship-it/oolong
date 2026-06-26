@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PromptForge — مصنع البرومبتات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a14;
+  --surface: #12122a;
+  --card: #1a1a35;
+  --border: #2a2a50;
+  --primary: #7c6af5;
+  --primary-hover: #6a58e8;
+  --accent: #f59e0b;
+  --text: #e8e8f0;
+  --muted: #8888aa;
+  --success: #10b981;
+  --danger: #f87171;
+  --danger-bg: #1f1020;
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html[lang="ar"] body { font-family: 'IBM Plex Sans Arabic','Noto Sans Arabic',Tahoma,sans-serif; }
+html[lang="en"] body { font-family: 'Inter','Segoe UI',system-ui,sans-serif; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* ── NAV ── */
+nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 17px;
+}
+.logo-icon {
+  width: 34px; height: 34px;
+  border-radius: 9px;
+  background: linear-gradient(135deg,#7c6af5,#f59e0b);
+  display: grid; place-items: center;
+  font-weight: 700; font-size: 12px; color: #fff;
+  font-family: 'Inter',sans-serif;
+}
+.lang-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 7px 16px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  transition: all .15s;
+}
+.lang-btn:hover { border-color: var(--primary); color: var(--text); }
+
+/* ── HERO ── */
+.hero {
+  text-align: center;
+  padding: 52px 20px 28px;
+}
+.hero h1 {
+  font-size: clamp(28px,5vw,42px);
+  font-weight: 700;
+  background: linear-gradient(135deg,#7c6af5 30%,#f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 10px;
+}
+.hero p { color: var(--muted); font-size: 17px; }
+
+/* ── MAIN ── */
+main {
+  flex: 1;
+  padding: 0 16px 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* ── CARD ── */
+.card {
+  width: 100%;
+  max-width: 760px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── LABEL ── */
+label, .field-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+/* ── TEXTAREA ── */
+textarea {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 14px 16px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 120px;
+  outline: none;
+  transition: border-color .15s;
+  line-height: 1.7;
+}
+textarea:focus { border-color: var(--primary); }
+textarea::placeholder { color: var(--muted); }
+
+/* ── GRID ROW ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media(max-width:540px){ .grid-2 { grid-template-columns: 1fr; } }
+
+/* ── MODEL CHIPS ── */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.chip:hover { border-color: var(--primary); color: var(--text); }
+.chip.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+/* ── SELECT ── */
+select {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+}
+select:focus { border-color: var(--primary); }
+
+/* ── API KEY SECTION ── */
+.api-section {
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  display: none;
+  gap: 8px;
+  flex-direction: column;
+}
+.api-section.visible { display: flex; }
+.api-section p {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.api-section input {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: 'JetBrains Mono','Courier New',monospace;
+  outline: none;
+}
+.api-section input:focus { border-color: var(--primary); }
+
+/* ── BUTTONS ── */
+.btn-row { display: flex; gap: 12px; }
+@media(max-width:480px){ .btn-row { flex-direction: column; } }
+
+.btn {
+  flex: 1;
+  padding: 13px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  transition: all .15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-hint { font-size: 11px; font-weight: 400; opacity: .7; }
+
+.btn-quick {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.btn-quick:hover:not(:disabled) { border-color: var(--primary); }
+
+.btn-ai {
+  background: linear-gradient(135deg,var(--primary),#a855f7);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(124,106,245,.3);
+}
+.btn-ai:hover:not(:disabled) { opacity: .9; transform: translateY(-1px); }
+
+/* ── ERROR ── */
+.error-msg {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid rgba(248,113,113,.2);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  display: none;
+}
+.error-msg.visible { display: block; }
+
+/* ── RESULT CARD ── */
+.result-card {
+  width: 100%;
+  max-width: 760px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: none;
+  animation: fadeIn .25s ease;
+}
+.result-card.visible { display: block; }
+
+@keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+.result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.result-title { font-weight: 600; font-size: 15px; }
+.badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+.badge-ai { background: #2e1a5e; color: #a78bfa; }
+.badge-local { background: #14291e; color: #4ade80; }
+.badge-intent { background: var(--surface); color: var(--muted); }
+
+.btn-reset {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  font-family: inherit;
+}
+.btn-reset:hover { color: var(--text); }
+
+/* ── PROMPT BLOCK ── */
+.prompt-wrap {
+  padding: 20px;
+  position: relative;
+}
+.prompt-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  font-family: 'JetBrains Mono','Fira Code','Courier New',monospace;
+  font-size: 13px;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text);
+  position: relative;
+}
+.btn-copy {
+  position: absolute;
+  top: 10px;
+  inset-inline-end: 10px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.prompt-block:hover .btn-copy { opacity: 1; }
+.btn-copy.copied { background: #065f46; }
+.btn-copy-mobile {
+  display: none;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+@media(max-width:600px){ .btn-copy-mobile { display: block; } }
+
+/* ── ACCORDION ── */
+.accordion { border-top: 1px solid var(--border); }
+.accordion-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 20px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: start;
+}
+.accordion-btn:hover { color: var(--text); }
+.chevron { transition: transform .2s; display: inline-block; font-size: 11px; }
+.chevron.open { transform: rotate(180deg); }
+.accordion-body { padding: 0 20px 16px; display: none; }
+.accordion-body.open { display: block; }
+
+/* Variant block */
+.variant-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-family: 'JetBrains Mono',monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text);
+  position: relative;
+  margin-bottom: 10px;
+}
+.variant-block:last-child { margin-bottom: 0; }
+.variant-copy {
+  position: absolute;
+  top: 6px;
+  inset-inline-end: 6px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.variant-block:hover .variant-copy { opacity: 1; }
+
+/* Rationale */
+.rationale-text { font-size: 13px; line-height: 1.7; color: var(--text); }
+
+/* Tips */
+.tips-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.tips-list li { display: flex; gap: 8px; font-size: 13px; color: var(--text); }
+.tips-list li::before { content: '•'; color: var(--primary); flex-shrink: 0; }
+
+/* ── FOOTER ── */
+footer {
+  text-align: center;
+  padding: 16px;
+  font-size: 13px;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+}
+
+/* ── LOADER ── */
+.spinner {
+  display: inline-block;
+  width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  vertical-align: middle;
+  margin-inline-end: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <div class="logo-icon">PF</div>
+    <span id="nav-title">PromptForge</span>
+  </div>
+  <button class="lang-btn" onclick="toggleLang()" id="lang-btn">English</button>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <h1>PromptForge</h1>
+  <p id="tagline">حوّل فكرتك إلى برومبت احترافي</p>
+</div>
+
+<!-- MAIN -->
+<main>
+
+  <!-- FORGE CARD -->
+  <div class="card">
+
+    <!-- Idea -->
+    <div>
+      <label id="lbl-idea">فكرتك</label>
+      <textarea id="idea" rows="5" id="idea"
+        placeholder="اكتب فكرتك هنا... مثال: أريد برومبت لكتابة مقال عن مستقبل الذكاء الاصطناعي"></textarea>
+    </div>
+
+    <!-- Model + Language -->
+    <div class="grid-2">
+      <div>
+        <div class="field-label" id="lbl-model">النموذج المستهدف</div>
+        <div class="chips" id="model-chips">
+          <button class="chip active" data-model="claude">🤖 Claude</button>
+          <button class="chip" data-model="openai">💬 ChatGPT</button>
+          <button class="chip" data-model="gemini">♊ Gemini</button>
+          <button class="chip" data-model="midjourney">🎨 Midjourney</button>
+          <button class="chip" data-model="dalle">🖼️ DALL·E</button>
+          <button class="chip" data-model="stablediffusion">⚗️ Stable Diffusion</button>
+        </div>
+      </div>
+      <div>
+        <label for="out-lang" id="lbl-lang">لغة البرومبت</label>
+        <select id="out-lang">
+          <option value="ar">العربية</option>
+          <option value="en">English</option>
+          <option value="es">Español</option>
+          <option value="fr">Français</option>
+          <option value="de">Deutsch</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- API Key (hidden by default) -->
+    <div class="api-section" id="api-section">
+      <p id="api-hint">🔑 أدخل مفتاح Anthropic لتفعيل الترقية بالذكاء الاصطناعي. المفتاح يُستخدم محلياً فقط ولا يُرسل لأي خادم.</p>
+      <input type="password" id="api-key" placeholder="sk-ant-api03-..." autocomplete="off">
+    </div>
+
+    <!-- Error -->
+    <div class="error-msg" id="error-msg"></div>
+
+    <!-- Buttons -->
+    <div class="btn-row">
+      <button class="btn btn-quick" id="btn-quick" onclick="handleQuick()">
+        <span id="lbl-quick">⚡ توليد سريع</span>
+        <span class="btn-hint" id="hint-quick">مجاني وفوري — بدون AI</span>
+      </button>
+      <button class="btn btn-ai" id="btn-ai" onclick="handleAI()">
+        <span id="lbl-ai">✨ ترقية بالذكاء الاصطناعي</span>
+        <span class="btn-hint" id="hint-ai">نتيجة أعمق باستخدام Claude Haiku</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- RESULT CARD -->
+  <div class="result-card" id="result-card">
+    <div class="result-header">
+      <div>
+        <div class="result-title" id="lbl-result">البرومبت المُولَّد</div>
+        <div class="badges" style="margin-top:6px">
+          <span class="badge badge-local" id="badge-local" style="display:none"></span>
+          <span class="badge badge-ai" id="badge-ai" style="display:none"></span>
+          <span class="badge badge-intent" id="badge-intent"></span>
+        </div>
+      </div>
+      <button class="btn-reset" onclick="resetResult()" id="lbl-new">+ جديد</button>
+    </div>
+
+    <!-- Main prompt -->
+    <div class="prompt-wrap">
+      <div class="prompt-block" id="prompt-out">
+        <button class="btn-copy" id="copy-main" onclick="copyText('prompt-out','copy-main')">نسخ</button>
+        <span id="prompt-text"></span>
+      </div>
+      <button class="btn-copy-mobile" id="copy-mobile" onclick="copyText('prompt-out','copy-mobile')">نسخ البرومبت</button>
+    </div>
+
+    <!-- Variants (AI only) -->
+    <div class="accordion" id="accordion-variants" style="display:none">
+      <button class="accordion-btn" onclick="toggleAccordion('body-variants','chev-variants')">
+        <span id="lbl-variants">البدائل</span>
+        <span class="chevron" id="chev-variants">▾</span>
+      </button>
+      <div class="accordion-body" id="body-variants"></div>
+    </div>
+
+    <!-- Rationale (AI only) -->
+    <div class="accordion" id="accordion-rationale" style="display:none">
+      <button class="accordion-btn" onclick="toggleAccordion('body-rationale','chev-rationale')">
+        <span id="lbl-rationale">لماذا هذا البرومبت فعّال؟</span>
+        <span class="chevron" id="chev-rationale">▾</span>
+      </button>
+      <div class="accordion-body" id="body-rationale"></div>
+    </div>
+
+    <!-- Tips (AI only) -->
+    <div class="accordion" id="accordion-tips" style="display:none">
+      <button class="accordion-btn" onclick="toggleAccordion('body-tips','chev-tips')">
+        <span id="lbl-tips">نصائح للتحسين</span>
+        <span class="chevron" id="chev-tips">▾</span>
+      </button>
+      <div class="accordion-body" id="body-tips"></div>
+    </div>
+  </div>
+
+</main>
+
+<footer id="footer-text">مبني بـ ❤️ و Claude</footer>
+
+<script>
+// ═══════════════════════════════════════════════════
+// PromptForge Engine — pure JavaScript
+// ═══════════════════════════════════════════════════
+
+// ── Intent Classification ──
+const INTENT_KW = {
+  writing:     ['write','اكتب','article','مقال','email','رسالة','blog','post','marketing','تسويق','content','محتوى','essay','story','قصة','caption','newsletter','إعلان','copywriting','social media','تغريدة','منشور'],
+  coding:      ['code','كود','function','دالة','bug','debug','class','api','script','برمج','implement','refactor','برمجة','algorithm','خوارزمية','component','unit test','sql','endpoint','typescript','python','react','database'],
+  image:       ['image','صورة','photo','illustration','رسم','artwork','portrait','landscape','generate image','midjourney','dall-e','stable diffusion','visual','فن','art style','fantasy','realistic photo','render','create an image'],
+  analysis:    ['analyze','حلل','analysis','تحليل','data','بيانات','report','تقرير','statistics','إحصاء','evaluate','assess','compare','قارن','benchmark','market analysis','تحليل السوق','insights'],
+  agent:       ['agent','وكيل','system prompt','assistant','مساعد','chatbot','bot','autonomous','workflow','customer support','sales bot','شخصية النظام','build an ai'],
+  reasoning:   ['solve','حل','problem','مشكلة','logic','منطق','plan','strategy','استراتيجية','decision','proof','برهان','debate','pros and cons','مزايا وعيوب','think through','calculate'],
+  roleplay:    ['pretend','roleplay','act as','character','شخصية','play','scenario','imagine','تخيل','simulate','تمثيل','impersonate','you are','تصرف كأنك'],
+  education:   ['explain','اشرح','teach','علّم','tutorial','lesson','درس','beginner guide','step by step','خطوة بخطوة','what is','ما هو','how does','كيف يعمل','دليل','simplify','اشرح ببساطة'],
+  translation: ['translate','ترجم','translation','ترجمة','from arabic','from english','للعربية','للإنجليزية','into arabic','localize','توطين'],
+};
+
+function classifyIntent(text) {
+  const lower = text.toLowerCase();
+  const scores = {};
+  for (const [intent, kws] of Object.entries(INTENT_KW)) {
+    scores[intent] = 0;
+    for (const kw of kws) {
+      if (lower.includes(kw.toLowerCase())) {
+        scores[intent] += kw.includes(' ') ? 3 : kw.length > 5 ? 2 : 1;
+      }
+    }
+  }
+  const sorted = Object.entries(scores).sort((a,b)=>b[1]-a[1]);
+  return sorted[0][1] > 0 ? sorted[0][0] : 'writing';
+}
+
+function detectLanguage(text) {
+  const ar = (text.match(/[؀-ۿ]/g)||[]).length;
+  const all = (text.match(/[a-zA-Z؀-ۿ]/g)||[]).length;
+  return all === 0 ? 'en' : ar/all > 0.5 ? 'ar' : 'en';
+}
+
+// ── Adapters ──
+function adaptClaude(slots) {
+  const p = [];
+  if (slots.role) p.push(`<role>\n${slots.role}\n</role>`);
+  p.push(`<task>\n${slots.objective}\n</task>`);
+  if (slots.context) p.push(`<context>\n${slots.context}\n</context>`);
+  if (slots.constraints?.length) p.push(`<constraints>\n${slots.constraints.map(c=>'- '+c).join('\n')}\n</constraints>`);
+  if (slots.tone) p.push(`<tone>${slots.tone}</tone>`);
+  if (slots.outputFormat) p.push(`<output_format>\n${slots.outputFormat}\n</output_format>`);
+  if (slots.reasoning) p.push(`<thinking>\nفكّر خطوة بخطوة قبل الإجابة. اعرض منطقك بوضوح.\n</thinking>`);
+  return p.join('\n\n');
+}
+
+function adaptOpenAI(slots) {
+  const s = [];
+  if (slots.role) s.push(`# Role\n${slots.role}`);
+  s.push(`# Task\n${slots.objective}`);
+  if (slots.context) s.push(`# Context\n${slots.context}`);
+  if (slots.constraints?.length) s.push(`# Constraints\n${slots.constraints.map(c=>'- '+c).join('\n')}`);
+  if (slots.tone) s.push(`# Tone\n${slots.tone}`);
+  if (slots.outputFormat) s.push(`# Output Format\n${slots.outputFormat}`);
+  if (slots.reasoning) s.push(`# Instructions\n1. Think step by step before answering.\n2. Show your reasoning explicitly.\n3. Verify your conclusion.`);
+  return s.join('\n\n');
+}
+
+function adaptMidjourney(slots) {
+  const parts = [slots.objective, slots.context, slots.tone, 'highly detailed', 'cinematic lighting', 'professional photography'].filter(Boolean);
+  return `/imagine ${parts.join(', ')} --ar 16:9 --v 6 --style raw --q 1`;
+}
+
+function adaptSD(slots) {
+  const pos = [slots.objective, slots.context, slots.tone, 'masterpiece','best quality','highly detailed','8k resolution','sharp focus'].filter(Boolean).join(', ');
+  const neg = 'blurry, low quality, distorted, deformed, ugly, watermark, text, signature, artifacts';
+  return `**Positive prompt:**\n${pos}\n\n**Negative prompt:**\n${neg}\n\n**Parameters:** Steps: 30 | CFG: 7 | Size: 768×512 | Sampler: DPM++ 2M Karras`;
+}
+
+// ── Roles & Formats ──
+const ROLES = {
+  writing:     { ar:'أنت كاتب محترف متخصص في إنتاج محتوى إبداعي وفعّال يترك أثراً في القارئ', en:'You are a professional writer specializing in compelling, high-impact content that resonates with readers' },
+  coding:      { ar:'أنت مهندس برمجيات خبير بأكثر من 10 سنوات من الخبرة، متخصص في كتابة كود نظيف قابل للصيانة', en:'You are a senior software engineer with 10+ years of experience, specializing in clean, maintainable, and efficient code' },
+  image:       { ar:'', en:'' },
+  analysis:    { ar:'أنت محلل بيانات خبير مع خلفية قوية في الإحصاء والتحليل الكمي والنوعي', en:'You are an expert data analyst with a strong background in both quantitative and qualitative analysis' },
+  agent:       { ar:'أنت مصمم أنظمة ذكاء اصطناعي متخصص في بناء مساعدين ذكيين فعّالين', en:'You are an AI systems designer specializing in building focused and effective intelligent assistants' },
+  reasoning:   { ar:'أنت خبير في حل المشكلات والتفكير المنطقي المنهجي', en:'You are an expert in systematic problem-solving and logical reasoning' },
+  roleplay:    { ar:'أنت ممثل بارع قادر على تجسيد أي شخصية بواقعية عالية', en:'You are a skilled method actor capable of fully embodying any character with authentic voice' },
+  education:   { ar:'أنت معلم محترف وموهوب قادر على شرح أعقد المفاهيم بأسلوب واضح ومشوّق', en:'You are a gifted educator capable of explaining complex concepts clearly, simply, and engagingly' },
+  translation: { ar:'أنت مترجم محترف متخصص في الترجمة الدقيقة مع مراعاة الفروق الثقافية', en:'You are a professional translator specializing in accurate translation that preserves nuance and cultural context' },
+};
+
+const FORMATS = {
+  writing:     { ar:'اكتب النص بشكل منظم. استخدم عناوين فرعية إذا لزم. لغة سلسة وجذابة تناسب الجمهور المستهدف.', en:'Write in an organized, flowing structure. Use subheadings for longer content. Smooth and engaging language.' },
+  coding:      { ar:'قدّم الكود داخل code block مع تعليقات توضيحية. اشرح منطق الحل بإيجاز قبل وبعد الكود.', en:'Present code in a formatted code block with brief inline comments. Explain the solution logic before and after.' },
+  image:       { ar:'', en:'' },
+  analysis:    { ar:'ملخص تنفيذي أولاً، ثم التحليل التفصيلي في نقاط واضحة، ختام بالتوصيات.', en:'Executive summary first, then detailed analysis in clear points, concluding with actionable recommendations.' },
+  agent:       { ar:'تعليمات واضحة وشاملة تغطي: هوية المساعد، نطاق عمله، أسلوب التعامل، القيود، أمثلة على الردود.', en:'Clear instructions covering: assistant identity, scope, interaction style, boundaries, and example responses.' },
+  reasoning:   { ar:'اعرض تفكيرك خطوة بخطوة قبل الإجابة النهائية. وضّح افتراضاتك وأثبت استنتاجاتك.', en:'Show your thinking step by step before the final answer. State assumptions and prove conclusions explicitly.' },
+  roleplay:    { ar:'ابق في الشخصية طوال المحادثة. ردود نابعة من منطق الشخصية وتجاربها.', en:'Stay in character throughout. Responses from the character\'s own logic and experiences.' },
+  education:   { ar:'اشرح تدريجياً من البسيط للمعقد. استخدم تشبيهات من الحياة اليومية وأمثلة عملية.', en:'Explain progressively from simple to complex. Use everyday analogies and practical examples.' },
+  translation: { ar:'ترجمة طبيعية تراعي السياق والفروق الثقافية. اهتم بالمعنى والأسلوب لا بالترجمة الحرفية.', en:'Natural translation considering context and cultural nuances. Focus on meaning and style.' },
+};
+
+const TONES = {
+  writing:     { ar:'احترافي وجذاب', en:'Professional and engaging' },
+  coding:      { ar:'تقني ودقيق', en:'Technical and precise' },
+  image:       { ar:'سينمائي وحيوي', en:'Cinematic, vibrant' },
+  analysis:    { ar:'موضوعي ومنهجي', en:'Objective and systematic' },
+  agent:       { ar:'واضح ومباشر', en:'Clear and direct' },
+  reasoning:   { ar:'منطقي وتحليلي', en:'Logical and analytical' },
+  roleplay:    { ar:'غامر وتفاعلي', en:'Immersive and interactive' },
+  education:   { ar:'ودود وصبور', en:'Friendly and patient' },
+  translation: { ar:'أمين للمعنى', en:'Faithful to the original' },
+};
+
+const INTENT_SLOTS = {
+  writing:     ['role','objective','context','tone','constraints','outputFormat'],
+  coding:      ['role','objective','context','constraints','outputFormat','reasoning'],
+  image:       ['objective','context','tone'],
+  analysis:    ['role','objective','context','outputFormat','reasoning'],
+  agent:       ['role','objective','context','constraints','outputFormat'],
+  reasoning:   ['objective','context','reasoning','outputFormat'],
+  roleplay:    ['role','objective','context','tone','constraints'],
+  education:   ['role','objective','context','outputFormat','tone'],
+  translation: ['role','objective','context','constraints','outputFormat'],
+};
+
+function buildLocalPrompt(idea, targetModel, outLang) {
+  const lang = outLang || detectLanguage(idea);
+  const intent = classifyIntent(idea);
+  const relevant = INTENT_SLOTS[intent] || INTENT_SLOTS.writing;
+
+  const slots = { objective: idea };
+  if (relevant.includes('role') && ROLES[intent]?.[lang]) slots.role = ROLES[intent][lang];
+  if (relevant.includes('outputFormat') && FORMATS[intent]?.[lang]) slots.outputFormat = FORMATS[intent][lang];
+  if (relevant.includes('tone') && TONES[intent]?.[lang]) slots.tone = TONES[intent][lang];
+  if (relevant.includes('reasoning')) slots.reasoning = true;
+
+  let prompt;
+  switch(targetModel) {
+    case 'claude':    prompt = adaptClaude(slots);    break;
+    case 'openai':
+    case 'gemini':    prompt = adaptOpenAI(slots);    break;
+    case 'midjourney': prompt = adaptMidjourney(slots); break;
+    case 'dalle':
+    case 'stablediffusion': prompt = adaptSD(slots); break;
+    default:          prompt = adaptClaude(slots);
+  }
+  return { prompt, intent, lang };
+}
+
+// ── Meta-Prompt ──
+const MODEL_INST = {
+  claude: 'Use XML structural tags: <role>, <task>, <context>, <constraints>, <output_format>, <thinking>.',
+  openai: 'Use Markdown headers (# Role, # Task, # Context, # Output Format). Numbered steps for instructions.',
+  gemini: 'Be detailed and context-rich. Provide comprehensive background before the main ask.',
+  midjourney: 'Generate a /imagine command: [subject], [environment], [art style], [lighting], [mood] --ar 16:9 --v 6 --style raw. Comma-separated visual terms only.',
+  dalle: 'A detailed visual description in 2-3 sentences: subject, style (e.g. oil painting), lighting, color palette, mood, perspective.',
+  stablediffusion: 'Two sections: (1) Positive prompt — comma-separated tags with quality boosters; (2) Negative prompt — things to avoid.',
+};
+
+function buildMetaPrompt(idea, intent, targetModel, outLang) {
+  return `You are a world-class prompt engineer. Transform this raw idea into a professional prompt optimized for the target model.
+
+<user_idea>${idea}</user_idea>
+<intent>${intent}</intent>
+<target_model>${targetModel}</target_model>
+<output_language>${outLang}</output_language>
+<model_instructions>${MODEL_INST[targetModel] || MODEL_INST.claude}</model_instructions>
+
+Rules:
+1. Write the final prompt ENTIRELY in ${outLang}.
+2. Apply the structural style from model_instructions exactly.
+3. Fill ALL relevant slots: role, objective, context, constraints, output format, tone, reasoning.
+4. Infer missing information intelligently — never leave slots empty.
+5. Make it copy-pasteable and production-ready.
+
+Return ONLY valid JSON (no code fences, no extra text):
+{
+  "prompt": "<complete professional prompt in ${outLang}>",
+  "variants": ["<shorter variant>", "<more creative variant>"],
+  "rationale": "<2-3 sentences on why this prompt is effective, in ${outLang}>",
+  "tips": ["<actionable tip>", "<another tip>"]
+}`;
+}
+
+// ═══════════════════════════════════════════════════
+// UI State
+// ═══════════════════════════════════════════════════
+let currentLang = 'ar';
+let selectedModel = 'claude';
+let loading = false;
+
+// ── Language strings ──
+const UI = {
+  ar: {
+    tagline: 'حوّل فكرتك إلى برومبت احترافي',
+    langBtn: 'English',
+    lblIdea: 'فكرتك',
+    placeholder: 'اكتب فكرتك هنا... مثال: أريد برومبت لكتابة مقال عن مستقبل الذكاء الاصطناعي',
+    lblModel: 'النموذج المستهدف',
+    lblLang: 'لغة البرومبت',
+    apiHint: '🔑 أدخل مفتاح Anthropic لتفعيل الترقية. المفتاح يُستخدم محلياً فقط.',
+    quick: '⚡ توليد سريع',
+    hintQuick: 'مجاني وفوري — بدون AI',
+    ai: '✨ ترقية بالذكاء الاصطناعي',
+    hintAi: 'نتيجة أعمق باستخدام Claude Haiku',
+    generating: '⏳ جاري التوليد...',
+    upgrading: '⏳ جاري الترقية...',
+    errEmpty: 'الرجاء إدخال فكرتك أولاً',
+    errApi: 'أدخل مفتاح API أولاً',
+    errFail: 'حدث خطأ. تأكد من صحة مفتاح API.',
+    resultTitle: 'البرومبت المُولَّد',
+    badgeLocal: 'توليد محلي',
+    badgeAi: 'مُحسَّن بـ Claude',
+    copy: 'نسخ',
+    copied: '✓ تم',
+    newBtn: '+ جديد',
+    variants: 'البدائل',
+    rationale: 'لماذا هذا البرومبت فعّال؟',
+    tips: 'نصائح للتحسين',
+    footer: 'مبني بـ ❤️ و Claude',
+    intents: { writing:'كتابة', coding:'برمجة', image:'صورة', analysis:'تحليل', agent:'وكيل AI', reasoning:'استدلال', roleplay:'تمثيل أدوار', education:'تعليم', translation:'ترجمة' },
+  },
+  en: {
+    tagline: 'Transform your idea into a professional prompt',
+    langBtn: 'العربية',
+    lblIdea: 'Your Idea',
+    placeholder: 'Describe your idea here... e.g., I need a prompt for writing an article about the future of AI',
+    lblModel: 'Target Model',
+    lblLang: 'Prompt Language',
+    apiHint: '🔑 Enter your Anthropic API key to enable AI upgrade. Used locally only.',
+    quick: '⚡ Quick Generate',
+    hintQuick: 'Free & instant — no AI call',
+    ai: '✨ AI Upgrade',
+    hintAi: 'Deeper result using Claude Haiku',
+    generating: '⏳ Generating...',
+    upgrading: '⏳ Upgrading...',
+    errEmpty: 'Please enter your idea first',
+    errApi: 'Please enter your API key first',
+    errFail: 'Error occurred. Check your API key.',
+    resultTitle: 'Generated Prompt',
+    badgeLocal: 'Local Generation',
+    badgeAi: 'AI Enhanced',
+    copy: 'Copy',
+    copied: '✓ Copied',
+    newBtn: '+ New',
+    variants: 'Variants',
+    rationale: 'Why is this prompt effective?',
+    tips: 'Tips for Improvement',
+    footer: 'Built with ❤️ and Claude',
+    intents: { writing:'Writing', coding:'Coding', image:'Image', analysis:'Analysis', agent:'AI Agent', reasoning:'Reasoning', roleplay:'Roleplay', education:'Education', translation:'Translation' },
+  },
+};
+
+function t(key) { return UI[currentLang][key] || key; }
+
+function applyLang() {
+  const u = UI[currentLang];
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+  document.getElementById('tagline').textContent = u.tagline;
+  document.getElementById('lang-btn').textContent = u.langBtn;
+  document.getElementById('lbl-idea').textContent = u.lblIdea;
+  document.getElementById('idea').placeholder = u.placeholder;
+  document.getElementById('lbl-model').textContent = u.lblModel;
+  document.getElementById('lbl-lang').textContent = u.lblLang;
+  document.getElementById('api-hint').textContent = u.apiHint;
+  document.getElementById('lbl-quick').textContent = u.quick;
+  document.getElementById('hint-quick').textContent = u.hintQuick;
+  document.getElementById('lbl-ai').textContent = u.ai;
+  document.getElementById('hint-ai').textContent = u.hintAi;
+  document.getElementById('lbl-result').textContent = u.resultTitle;
+  document.getElementById('lbl-new').textContent = u.newBtn;
+  document.getElementById('lbl-variants').textContent = u.variants;
+  document.getElementById('lbl-rationale').textContent = u.rationale;
+  document.getElementById('lbl-tips').textContent = u.tips;
+  document.getElementById('footer-text').textContent = u.footer;
+  document.getElementById('badge-local').textContent = u.badgeLocal;
+  document.getElementById('badge-ai').textContent = u.badgeAi;
+  document.getElementById('copy-main').textContent = u.copy;
+  document.getElementById('copy-mobile').textContent = u.copy;
+}
+
+function toggleLang() {
+  currentLang = currentLang === 'ar' ? 'en' : 'ar';
+  applyLang();
+}
+
+// ── Model chips ──
+document.getElementById('model-chips').addEventListener('click', e => {
+  const chip = e.target.closest('.chip');
+  if (!chip) return;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  selectedModel = chip.dataset.model;
+  // Show API section hint when AI-relevant model selected
+});
+
+// ── Accordion ──
+function toggleAccordion(bodyId, chevId) {
+  const body = document.getElementById(bodyId);
+  const chev = document.getElementById(chevId);
+  body.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+
+// ── Copy ──
+function copyText(containerId, btnId) {
+  const text = document.getElementById('prompt-text').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById(btnId);
+    const orig = btn.textContent;
+    btn.textContent = t('copied');
+    btn.style.background = '#065f46';
+    setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 2000);
+  });
+}
+
+// ── Error ──
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg;
+  el.classList.add('visible');
+}
+function clearError() { document.getElementById('error-msg').classList.remove('visible'); }
+
+// ── Loading state ──
+function setLoading(isLoading, isAI) {
+  loading = isLoading;
+  const qBtn = document.getElementById('btn-quick');
+  const aBtn = document.getElementById('btn-ai');
+  qBtn.disabled = isLoading;
+  aBtn.disabled = isLoading;
+  if (isLoading) {
+    if (isAI) {
+      document.getElementById('lbl-ai').innerHTML = `<span class="spinner"></span>${t('upgrading')}`;
+    } else {
+      document.getElementById('lbl-quick').innerHTML = `<span class="spinner"></span>${t('generating')}`;
+    }
+  } else {
+    document.getElementById('lbl-quick').textContent = t('quick');
+    document.getElementById('lbl-ai').textContent = t('ai');
+  }
+}
+
+// ── Show result ──
+function showResult(data, isAI) {
+  const u = UI[currentLang];
+  document.getElementById('prompt-text').textContent = data.prompt;
+
+  // Badges
+  document.getElementById('badge-local').style.display = isAI ? 'none' : 'inline';
+  document.getElementById('badge-ai').style.display = isAI ? 'inline' : 'none';
+  document.getElementById('badge-intent').textContent = u.intents[data.intent] || data.intent;
+
+  // AI extras
+  const hasVariants = isAI && data.variants?.length;
+  const hasRationale = isAI && data.rationale;
+  const hasTips = isAI && data.tips?.length;
+
+  document.getElementById('accordion-variants').style.display = hasVariants ? 'block' : 'none';
+  document.getElementById('accordion-rationale').style.display = hasRationale ? 'block' : 'none';
+  document.getElementById('accordion-tips').style.display = hasTips ? 'block' : 'none';
+
+  if (hasVariants) {
+    document.getElementById('body-variants').innerHTML = data.variants.map((v,i) => `
+      <div class="variant-block">
+        ${escHtml(v)}
+        <button class="variant-copy" onclick="copyVariant(this,'${escAttr(v)}')">${u.copy}</button>
+      </div>`).join('');
+  }
+
+  if (hasRationale) {
+    document.getElementById('body-rationale').innerHTML = `<p class="rationale-text">${escHtml(data.rationale)}</p>`;
+  }
+
+  if (hasTips) {
+    document.getElementById('body-tips').innerHTML = `<ul class="tips-list">${data.tips.map(tip=>`<li>${escHtml(tip)}</li>`).join('')}</ul>`;
+  }
+
+  document.getElementById('result-card').classList.add('visible');
+  document.getElementById('result-card').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escAttr(s) {
+  return String(s).replace(/'/g,'&#39;').replace(/"/g,'&quot;');
+}
+
+function copyVariant(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = UI[currentLang].copied;
+    btn.style.background = '#065f46';
+    setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 2000);
+  });
+}
+
+function resetResult() {
+  document.getElementById('result-card').classList.remove('visible');
+  document.getElementById('idea').focus();
+}
+
+// ── Quick Generate ──
+function handleQuick() {
+  clearError();
+  const idea = document.getElementById('idea').value.trim();
+  if (!idea) { showError(t('errEmpty')); return; }
+  const outLang = document.getElementById('out-lang').value;
+
+  setLoading(true, false);
+  setTimeout(() => {
+    try {
+      const result = buildLocalPrompt(idea, selectedModel, outLang);
+      showResult(result, false);
+    } catch(e) {
+      showError(e.message);
+    }
+    setLoading(false, false);
+  }, 10);
+}
+
+// ── AI Upgrade ──
+async function handleAI() {
+  clearError();
+  const idea = document.getElementById('idea').value.trim();
+  if (!idea) { showError(t('errEmpty')); return; }
+
+  // Show API key section if not visible
+  const apiSection = document.getElementById('api-section');
+  apiSection.classList.add('visible');
+  const apiKey = document.getElementById('api-key').value.trim();
+  if (!apiKey) {
+    document.getElementById('api-key').focus();
+    showError(t('errApi'));
+    return;
+  }
+
+  const outLang = document.getElementById('out-lang').value;
+  const intent = classifyIntent(idea);
+  const metaPrompt = buildMetaPrompt(idea, intent, selectedModel, outLang);
+
+  setLoading(true, true);
+  clearError();
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-allow-browser': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 2048,
+        messages: [{ role:'user', content: metaPrompt }],
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({}));
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+
+    const msg = await res.json();
+    const rawText = msg.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    const clean = rawText.replace(/^```(?:json)?\s*/m,'').replace(/\s*```$/m,'').trim();
+    const data = JSON.parse(clean);
+    showResult({ ...data, intent, lang: outLang }, true);
+  } catch(e) {
+    showError(`${t('errFail')} — ${e.message}`);
+  }
+  setLoading(false, true);
+}
+
+// ── Init ──
+applyLang();
+</script>
+</body>
+</html>
