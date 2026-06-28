@@ -9,5 +9,8 @@
   },
   "devDependencies": {
     "playwright": "^1.56.1"
+  },
+  "dependencies": {
+    "tsx": "^4.22.4"
   }
 }
