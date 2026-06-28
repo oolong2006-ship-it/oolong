@@ -8,6 +8,12 @@
 > نهائيًا أو وثيقة قانونية معتمدة إلا بعد مراجعته من مستشار قانوني مختص واستكمال
 > المتطلبات النظامية.
 
+## 🚀 احصل على رابط حيّ بنقرة واحدة
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/oolong2006-ship-it/oolong/tree/claude/franchise-ready-ai-saas-ans6p1&root-directory=franchise-ready-ai&project-name=franchise-ready-ai&repository-name=franchise-ready-ai)
+
+> اضبط **Root Directory = `franchise-ready-ai`** وأضف متغيرات البيئة. التفاصيل الكاملة في **[DEPLOY.md](./DEPLOY.md)**.
+
 ---
 
 ## التقنيات
