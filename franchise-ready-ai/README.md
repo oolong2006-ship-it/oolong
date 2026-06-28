@@ -1,36 +1,158 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Franchise Ready AI — منصة تقييم جاهزية الفرنشايز
 
-## Getting Started
+منصة SaaS عربية احترافية تساعد أصحاب المطاعم والكافيهات على تقييم جاهزيتهم للفرنشايز وإصدار تقرير PDF شامل.
 
-First, run the development server:
+## متطلبات التشغيل
+
+- Node.js 18+
+- PostgreSQL 14+
+- (اختياري) حساب Anthropic API للتحليل الذكي
+
+## التثبيت والتشغيل
 
 ```bash
+# 1. انسخ ملف البيئة
+cp .env.example .env
+
+# 2. عدّل المتغيرات في .env
+# DATABASE_URL, JWT_SECRET, ANTHROPIC_API_KEY
+
+# 3. ثبّت المكتبات
+npm install
+
+# 4. ولّد Prisma Client
+npx prisma generate
+
+# 5. أنشئ قاعدة البيانات
+npx prisma db push
+
+# 6. أدخل بيانات أولية
+npm run db:seed
+
+# 7. شغّل المشروع
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+المشروع يعمل على: http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## بيانات الدخول للاختبار
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **مدير النظام**: admin@franchise-ready.ai / Admin@1234!
+- **مستخدم تجريبي**: test@example.com / Test@1234!
 
-## Learn More
+## هيكل المشروع
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├── app/
+│   ├── page.tsx              # الصفحة الرئيسية (Landing Page)
+│   ├── login/                # تسجيل الدخول
+│   ├── register/             # إنشاء حساب
+│   ├── payment/              # الدفع
+│   ├── pricing/              # التسعير
+│   ├── terms/                # الشروط والأحكام
+│   ├── privacy/              # سياسة الخصوصية
+│   ├── dashboard/
+│   │   ├── page.tsx          # لوحة التحكم
+│   │   ├── projects/         # إدارة المشاريع
+│   │   │   └── [id]/
+│   │   │       ├── wizard/   # معالج جمع البيانات
+│   │   │       ├── files/    # رفع الملفات
+│   │   │       ├── review/   # مراجعة البيانات
+│   │   │       ├── score/    # درجة الجاهزية
+│   │   │       ├── preview/  # معاينة التقرير
+│   │   │       └── download/ # تحميل PDF
+│   │   ├── credits/          # رصيد المشاريع
+│   │   └── profile/          # الملف الشخصي
+│   ├── admin/
+│   │   ├── page.tsx          # لوحة الإدارة
+│   │   ├── users/            # إدارة المستخدمين
+│   │   ├── payments/         # المدفوعات
+│   │   └── projects/         # المشاريع
+│   └── api/
+│       ├── auth/             # مسارات المصادقة
+│       ├── payment/          # مسارات الدفع
+│       ├── user/             # بيانات المستخدم
+│       ├── projects/         # إدارة المشاريع
+│       └── admin/            # APIs الإدارة
+├── lib/
+│   ├── auth.ts               # المصادقة وإدارة الجلسات
+│   ├── ai.ts                 # محرك الذكاء الاصطناعي
+│   ├── payment.ts            # بوابة الدفع (adapter pattern)
+│   ├── storage.ts            # تخزين الملفات
+│   ├── db.ts                 # Prisma client
+│   ├── utils.ts              # دوال مساعدة
+│   └── wizard-config.ts      # إعدادات معالج البيانات
+├── components/
+│   └── layout/
+│       ├── Sidebar.tsx       # الشريط الجانبي
+│       └── DashboardLayout.tsx
+├── templates/
+│   └── report.html           # قالب PDF
+└── types/
+    └── index.ts              # أنواع TypeScript
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## نموذج العمل
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **السعر**: 1,999 ريال سعودي (+ 15% VAT)
+- **كل دفعة** = رصيد مشروع واحد
+- **كل رصيد** = تقرير منشأة واحد (100+ صفحة PDF)
+- **بعد الإصدار**: المشروع مقفل، أي تعديل يتطلب دفعة جديدة
 
-## Deploy on Vercel
+## ربط بوابة الدفع
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+المشروع يدعم نمط الـ Adapter. لربط بوابة حقيقية:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```typescript
+// في src/lib/payment.ts
+// أنشئ class جديد يطبق PaymentProvider interface
+class MoyasarProvider implements PaymentProvider {
+  async createPayment(params) { /* ... */ }
+  async verifyPayment(reference) { /* ... */ }
+}
+
+// ثم في paymentService factory:
+case "moyasar": return new MoyasarProvider()
+```
+
+ثم ضع في `.env`:
+```
+PAYMENT_PROVIDER=moyasar
+MOYASAR_API_KEY=sk_live_...
+```
+
+## توليد التقرير
+
+1. المستخدم يملأ البيانات عبر الـ Wizard (9 أقسام)
+2. يرفع الملفات (شعار، ملفات تجارية)
+3. يضغط "ابدأ التحليل" → يُرسل إلى Claude AI
+4. AI تحلل البيانات وتكتب 28 قسمًا بالعربية
+5. يُعاين التقرير ويصدر PDF احترافي
+6. يُقفل المشروع بعد الإصدار النهائي
+
+## المتغيرات البيئية
+
+| المتغير | الوصف | مطلوب |
+|---------|-------|--------|
+| DATABASE_URL | رابط PostgreSQL | ✅ |
+| JWT_SECRET | مفتاح التوقيع (32+ حرف) | ✅ |
+| ANTHROPIC_API_KEY | مفتاح API للذكاء الاصطناعي | ✅ |
+| PAYMENT_PROVIDER | mock / moyasar / tap | اختياري |
+| STORAGE_PROVIDER | local / supabase | اختياري |
+| NEXT_PUBLIC_APP_URL | رابط التطبيق | اختياري |
+| VAT_RATE | نسبة الضريبة (0.15) | اختياري |
+| PRICE_SAR | سعر الخدمة (1999) | اختياري |
+
+## الأمان
+
+- كلمات المرور مشفرة بـ bcryptjs (12 rounds)
+- الجلسات مخزنة في قاعدة البيانات
+- ملفات المستخدمين محمية بـ signed URLs
+- Rate limiting على مسارات المصادقة
+- Audit logs لكل عملية
+- منع تكرار إصدار التقرير
+
+---
+
+بُني بواسطة: Franchise Ready AI Team

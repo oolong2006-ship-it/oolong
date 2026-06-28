@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{REPORT_TITLE}}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Tajawal', 'Arial', sans-serif;
+    color: #1a1a1a;
+    background: #ffffff;
+    font-size: 14px;
+    line-height: 1.8;
+    direction: rtl;
+  }
+
+  :root {
+    --primary: #1a5c3a;
+    --gold: #c9a84c;
+    --light: #f8faf9;
+    --border: #e2e8f0;
+  }
+
+  /* ===== COVER PAGE ===== */
+  .cover-page {
+    page-break-after: always;
+    height: 100vh;
+    background: linear-gradient(135deg, #1a5c3a 0%, #0f3d26 60%, #1a4731 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cover-page::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0; bottom: 0; left: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  .cover-logo {
+    max-width: 180px;
+    max-height: 120px;
+    object-fit: contain;
+    margin-bottom: 40px;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+  }
+
+  .cover-badge {
+    background: rgba(201, 168, 76, 0.2);
+    border: 1px solid rgba(201, 168, 76, 0.4);
+    color: #c9a84c;
+    padding: 8px 24px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 30px;
+    letter-spacing: 0.5px;
+  }
+
+  .cover-title {
+    font-size: 42px;
+    font-weight: 800;
+    color: #ffffff;
+    text-align: center;
+    margin-bottom: 16px;
+    line-height: 1.3;
+  }
+
+  .cover-establishment {
+    font-size: 28px;
+    font-weight: 700;
+    color: #c9a84c;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+
+  .cover-subtitle {
+    font-size: 16px;
+    color: rgba(255,255,255,0.7);
+    text-align: center;
+    margin-bottom: 50px;
+  }
+
+  .cover-divider {
+    width: 80px;
+    height: 3px;
+    background: #c9a84c;
+    margin: 30px auto;
+    border-radius: 2px;
+  }
+
+  .cover-score-box {
+    background: rgba(255,255,255,0.1);
+    border: 2px solid rgba(201,168,76,0.4);
+    border-radius: 16px;
+    padding: 24px 48px;
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .cover-score-label {
+    font-size: 14px;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 8px;
+  }
+
+  .cover-score-value {
+    font-size: 56px;
+    font-weight: 800;
+    color: #c9a84c;
+    line-height: 1;
+  }
+
+  .cover-score-max {
+    font-size: 20px;
+    color: rgba(255,255,255,0.5);
+  }
+
+  .cover-classification {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-top: 8px;
+  }
+
+  .cover-meta {
+    display: flex;
+    gap: 40px;
+    color: rgba(255,255,255,0.6);
+    font-size: 13px;
+    margin-top: 20px;
+  }
+
+  .cover-watermark {
+    position: absolute;
+    bottom: 30px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.3);
+    text-align: center;
+  }
+
+  /* ===== PAGE LAYOUT ===== */
+  .page {
+    page-break-after: always;
+    padding: 50px 60px;
+    min-height: 100vh;
+    position: relative;
+  }
+
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 36px;
+  }
+
+  .page-header-logo {
+    max-width: 60px;
+    max-height: 40px;
+    object-fit: contain;
+    opacity: 0.8;
+  }
+
+  .page-header-title {
+    font-size: 13px;
+    color: #888;
+    font-weight: 500;
+  }
+
+  .page-footer {
+    position: absolute;
+    bottom: 30px;
+    left: 60px;
+    right: 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: #aaa;
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+  }
+
+  .page-number::before {
+    content: "صفحة ";
+  }
+
+  /* ===== HEADINGS ===== */
+  h1 { font-size: 28px; font-weight: 800; color: var(--primary); margin-bottom: 20px; }
+  h2 { font-size: 22px; font-weight: 700; color: var(--primary); margin-bottom: 16px; border-right: 4px solid var(--gold); padding-right: 12px; }
+  h3 { font-size: 17px; font-weight: 600; color: #333; margin-bottom: 12px; }
+  p { margin-bottom: 12px; }
+
+  /* ===== SECTION TITLE ===== */
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .section-number {
+    width: 40px;
+    height: 40px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  /* ===== DISCLAIMER ===== */
+  .disclaimer-box {
+    background: #fff8e1;
+    border: 2px solid #f59e0b;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .disclaimer-box h3 {
+    color: #92400e;
+    margin-bottom: 12px;
+  }
+
+  .disclaimer-box p {
+    color: #78350f;
+    font-size: 13px;
+  }
+
+  /* ===== SCORE CHART ===== */
+  .score-container {
+    text-align: center;
+    margin: 30px 0;
+  }
+
+  .score-circle {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: conic-gradient(var(--primary) {{SCORE_PERCENT}}%, #e5e7eb {{SCORE_PERCENT}}%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin-bottom: 16px;
+  }
+
+  .score-circle-inner {
+    width: 130px;
+    height: 130px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .score-number { font-size: 40px; font-weight: 800; color: var(--primary); line-height: 1; }
+  .score-label { font-size: 12px; color: #888; }
+  .score-class { font-size: 16px; font-weight: 700; color: var(--primary); margin-top: 8px; }
+
+  /* ===== DIMENSION BARS ===== */
+  .dimension-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 24px 0;
+  }
+
+  .dimension-item {
+    background: var(--light);
+    border-radius: 10px;
+    padding: 16px;
+  }
+
+  .dimension-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .dimension-bar-bg {
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .dimension-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--gold));
+    border-radius: 4px;
+    transition: width 0.3s;
+  }
+
+  /* ===== TABLE ===== */
+  table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px; }
+  th { background: var(--primary); color: white; padding: 10px 14px; text-align: right; }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  tr:nth-child(even) { background: var(--light); }
+
+  /* ===== CHECKLIST ===== */
+  .checklist { list-style: none; margin: 16px 0; }
+  .checklist li {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+  }
+  .check-yes { color: #16a34a; font-size: 16px; }
+  .check-no { color: #dc2626; font-size: 16px; }
+  .check-partial { color: #d97706; font-size: 16px; }
+
+  /* ===== INFO CARD ===== */
+  .info-card {
+    background: var(--light);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .info-item label {
+    display: block;
+    font-size: 11px;
+    color: #888;
+    margin-bottom: 4px;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+
+  .info-item span {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  /* ===== TIMELINE ===== */
+  .timeline { position: relative; padding-right: 24px; margin: 20px 0; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+
+  .timeline-item { position: relative; padding-bottom: 24px; padding-right: 24px; }
+  .timeline-dot {
+    position: absolute;
+    right: -6px;
+    top: 4px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: 2px solid white;
+    box-shadow: 0 0 0 2px var(--primary);
+  }
+  .timeline-title { font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+  .timeline-content { font-size: 13px; color: #555; }
+
+  /* ===== FINANCIAL BOX ===== */
+  .financial-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 20px 0;
+  }
+
+  .financial-item {
+    background: var(--primary);
+    color: white;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .financial-label { font-size: 11px; opacity: 0.8; margin-bottom: 6px; }
+  .financial-value { font-size: 20px; font-weight: 800; }
+  .financial-unit { font-size: 11px; opacity: 0.7; }
+
+  /* ===== RISK MATRIX ===== */
+  .risk-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .risk-badge {
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .risk-high { background: #fee2e2; color: #991b1b; }
+  .risk-medium { background: #fef3c7; color: #92400e; }
+  .risk-low { background: #d1fae5; color: #065f46; }
+
+  /* ===== TOC ===== */
+  .toc-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px dotted var(--border);
+    font-size: 14px;
+  }
+
+  .toc-item:hover { color: var(--primary); }
+  .toc-number { color: var(--primary); font-weight: 700; margin-left: 8px; }
+  .toc-page { color: #888; font-size: 12px; }
+
+  /* ===== RECOMMENDATION BOX ===== */
+  .recommendation {
+    background: linear-gradient(135deg, #f0fdf4, #d1fae5);
+    border: 2px solid #16a34a;
+    border-radius: 12px;
+    padding: 24px;
+    margin: 20px 0;
+  }
+
+  .recommendation h3 { color: #15803d; }
+
+  /* ===== PRINT ===== */
+  @media print {
+    body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .page { page-break-after: always; }
+    .cover-page { page-break-after: always; }
+  }
+</style>
+</head>
+<body>
+
+<!-- COVER PAGE -->
+<div class="cover-page">
+  {{#if LOGO_URL}}<img class="cover-logo" src="{{LOGO_URL}}" alt="شعار المنشأة">{{/if}}
+  <div class="cover-badge">تقرير جاهزية الامتياز التجاري</div>
+  <div class="cover-title">تقرير تقييم الجاهزية للفرنشايز</div>
+  <div class="cover-establishment">{{ESTABLISHMENT_NAME}}</div>
+  <div class="cover-subtitle">{{ACTIVITY_TYPE}} • {{CITY}}</div>
+  <div class="cover-divider"></div>
+  <div class="cover-score-box">
+    <div class="cover-score-label">درجة الجاهزية للامتياز التجاري</div>
+    <div class="cover-score-value">{{TOTAL_SCORE}}<span class="cover-score-max">/100</span></div>
+    <div class="cover-classification">{{SCORE_CLASSIFICATION}}</div>
+  </div>
+  <div class="cover-meta">
+    <span>📅 تاريخ الإصدار: {{ISSUE_DATE}}</span>
+    <span>📄 رقم التقرير: {{REPORT_ID}}</span>
+  </div>
+  <div class="cover-watermark">
+    Franchise Ready AI | للاستخدام الاستشاري فقط — لا يُعد وثيقة قانونية معتمدة
+  </div>
+</div>
+
+<!-- DISCLAIMER PAGE -->
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-title">إخلاء المسؤولية</div>
+    {{#if LOGO_URL}}<img class="page-header-logo" src="{{LOGO_URL}}" alt="">{{/if}}
+  </div>
+
+  <div class="section-title">
+    <div class="section-number">⚠</div>
+    <h1>إخلاء المسؤولية</h1>
+  </div>
+
+  <div class="disclaimer-box">
+    <h3>تنبيه قانوني مهم</h3>
+    <p>هذا التقرير أعدّته منصة Franchise Ready AI لأغراض استشارية أولية فقط، ولا يُعد وثيقة قانونية، أو عقد امتياز، أو اتفاقية ملزمة بأي شكل من الأشكال.</p>
+    <p>المعلومات والتحليلات الواردة في هذا التقرير مبنية على البيانات التي أدخلها صاحب المنشأة، ولم تخضع لتدقيق مالي أو قانوني مستقل.</p>
+    <p>لا يجوز الاستناد إلى هذا التقرير وحده في اتخاذ قرارات تجارية أو قانونية أو مالية ذات أهمية دون مراجعة مستشار قانوني ومالي مختص.</p>
+    <p>هذه المخرجات لا تغني عن المراجعة القانونية أو المحاسبية، ولا تمثل اعتمادًا رسميًا من أي جهة حكومية أو هيئة تنظيمية.</p>
+    <p>جميع التوقعات والأرقام التقديرية الواردة في هذا التقرير تمثل تقديرات أولية فقط، وقد تختلف النتائج الفعلية اختلافًا جوهريًا.</p>
+  </div>
+
+  <div class="page-footer">
+    <span>Franchise Ready AI — تقرير {{ESTABLISHMENT_NAME}}</span>
+    <span class="page-number">2</span>
+    <span>{{ISSUE_DATE}}</span>
+  </div>
+</div>
+
+<!-- TOC PAGE -->
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-title">فهرس المحتويات</div>
+    {{#if LOGO_URL}}<img class="page-header-logo" src="{{LOGO_URL}}" alt="">{{/if}}
+  </div>
+
+  <h2>فهرس المحتويات</h2>
+  <div class="toc-item"><span><span class="toc-number">1.</span> الملخص التنفيذي</span><span class="toc-page">4</span></div>
+  <div class="toc-item"><span><span class="toc-number">2.</span> ملف المنشأة</span><span class="toc-page">5</span></div>
+  <div class="toc-item"><span><span class="toc-number">3.</span> نظرة على العلامة التجارية</span><span class="toc-page">6</span></div>
+  <div class="toc-item"><span><span class="toc-number">4.</span> درجة جاهزية الفرنشايز</span><span class="toc-page">7</span></div>
+  <div class="toc-item"><span><span class="toc-number">5.</span> تقييم الوضع الحالي</span><span class="toc-page">8</span></div>
+  <div class="toc-item"><span><span class="toc-number">6.</span> تحليل المنتجات والخدمات</span><span class="toc-page">9</span></div>
+  <div class="toc-item"><span><span class="toc-number">7.</span> تحليل السوق والعملاء</span><span class="toc-page">10</span></div>
+  <div class="toc-item"><span><span class="toc-number">8.</span> الجاهزية التشغيلية</span><span class="toc-page">11</span></div>
+  <div class="toc-item"><span><span class="toc-number">9.</span> النموذج المالي</span><span class="toc-page">12</span></div>
+  <div class="toc-item"><span><span class="toc-number">10.</span> النموذج المقترح للفرنشايز</span><span class="toc-page">13</span></div>
+  <div class="toc-item"><span><span class="toc-number">11.</span> رسوم الفرنشايز المقترحة</span><span class="toc-page">14</span></div>
+  <div class="toc-item"><span><span class="toc-number">12.</span> متطلبات الممنوح له</span><span class="toc-page">15</span></div>
+  <div class="toc-item"><span><span class="toc-number">13.</span> نموذج دعم المانح</span><span class="toc-page">16</span></div>
+  <div class="toc-item"><span><span class="toc-number">14.</span> التدريب ودعم الافتتاح</span><span class="toc-page">17</span></div>
+  <div class="toc-item"><span><span class="toc-number">15.</span> نموذج سلسلة التوريد</span><span class="toc-page">18</span></div>
+  <div class="toc-item"><span><span class="toc-number">16.</span> نموذج ضبط الجودة</span><span class="toc-page">19</span></div>
+  <div class="toc-item"><span><span class="toc-number">17.</span> الأدلة المطلوبة</span><span class="toc-page">20</span></div>
+  <div class="toc-item"><span><span class="toc-number">18.</span> قائمة الامتثال السعودية</span><span class="toc-page">21</span></div>
+  <div class="toc-item"><span><span class="toc-number">19.</span> هيكل وثيقة الإفصاح</span><span class="toc-page">22</span></div>
+  <div class="toc-item"><span><span class="toc-number">20.</span> المخاطر وخطة التخفيف</span><span class="toc-page">23</span></div>
+  <div class="toc-item"><span><span class="toc-number">21.</span> خارطة طريق 90 يوم</span><span class="toc-page">24</span></div>
+  <div class="toc-item"><span><span class="toc-number">22.</span> خارطة طريق 12 شهرًا</span><span class="toc-page">25</span></div>
+  <div class="toc-item"><span><span class="toc-number">23.</span> قائمة المعلومات الناقصة</span><span class="toc-page">26</span></div>
+  <div class="toc-item"><span><span class="toc-number">24.</span> توصية المستشار النهائية</span><span class="toc-page">27</span></div>
+  <div class="toc-item"><span><span class="toc-number">25.</span> الخطوات التالية</span><span class="toc-page">28</span></div>
+
+  <div class="page-footer">
+    <span>Franchise Ready AI — تقرير {{ESTABLISHMENT_NAME}}</span>
+    <span class="page-number">3</span>
+    <span>{{ISSUE_DATE}}</span>
+  </div>
+</div>
+
+<!-- DYNAMIC SECTIONS PLACEHOLDER -->
+{{REPORT_SECTIONS}}
+
+</body>
+</html>
