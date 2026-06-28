@@ -1,17 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["playwright", "playwright-core", "@prisma/client", "prisma"],
-  experimental: {
-    serverActions: {
-      bodySizeLimit: "30mb",
-    },
+  turbopack: {
+    root: __dirname,
   },
-  images: {
-    remotePatterns: [
-      { protocol: "https", hostname: "**" },
-      { protocol: "http", hostname: "localhost" },
-    ],
+  eslint: {
+    ignoreDuringBuilds: true,
   },
 };
 

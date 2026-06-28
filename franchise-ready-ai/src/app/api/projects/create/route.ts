@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create establishment and mark credit as used in a transaction
-    const establishment = await db.$transaction(async (tx: typeof db) => {
+    const establishment = await db.$transaction(async (tx) => {
       const newEstablishment = await tx.establishment.create({
         data: {
           userId: session.id,

@@ -1,158 +1,177 @@
 # Franchise Ready AI — منصة تقييم جاهزية الفرنشايز
 
-منصة SaaS عربية احترافية تساعد أصحاب المطاعم والكافيهات على تقييم جاهزيتهم للفرنشايز وإصدار تقرير PDF شامل.
+منصة SaaS عربية (RTL) تساعد أصحاب المطاعم والكافيهات والمنشآت الخدمية على تقييم
+جاهزية منشآتهم للامتياز التجاري (Franchise)، وإصدار تقرير PDF احترافي شامل يحمل
+شعار المنشأة وبياناتها.
 
-## متطلبات التشغيل
+> **تنبيه قانوني:** التقرير الناتج تقرير استشاري أولي ومساند، ولا يُعد عقد امتياز
+> نهائيًا أو وثيقة قانونية معتمدة إلا بعد مراجعته من مستشار قانوني مختص واستكمال
+> المتطلبات النظامية.
 
-- Node.js 18+
+---
+
+## التقنيات
+
+| الطبقة | التقنية |
+|--------|---------|
+| الإطار | Next.js 16 (App Router) + TypeScript |
+| الواجهة | Tailwind CSS v4 + RTL + خط Tajawal |
+| قاعدة البيانات | PostgreSQL + Prisma ORM |
+| المصادقة | JWT + جلسات في قاعدة البيانات + bcrypt |
+| الدفع | نمط Adapter (Mock / Moyasar / HyperPay / Tap) |
+| الذكاء الاصطناعي | نمط Adapter (Anthropic Claude) |
+| التخزين | نمط Adapter (محلي / Supabase / S3) |
+| توليد PDF | قوالب HTML + Playwright/Chromium |
+
+---
+
+## نموذج العمل
+
+- سعر الخدمة: **1,999 ريال سعودي** (+ ضريبة القيمة المضافة 15%).
+- كل عملية دفع ناجحة تمنح **رصيدًا واحدًا** لإنشاء تقرير منشأة واحدة.
+- المستخدم يعبّئ البيانات على مراحل ويحفظها كمسودة.
+- بعد إصدار PDF النهائي يُقفل المشروع.
+- أي منشأة جديدة تتطلب دفعًا جديدًا.
+
+### حالات المشروع
+`draft → data_completed → ai_generated → preview_ready → final_issued → locked`
+
+---
+
+## التشغيل محليًا
+
+### 1. المتطلبات
+- Node.js 20+
 - PostgreSQL 14+
-- (اختياري) حساب Anthropic API للتحليل الذكي
 
-## التثبيت والتشغيل
-
+### 2. التثبيت
 ```bash
-# 1. انسخ ملف البيئة
-cp .env.example .env
-
-# 2. عدّل المتغيرات في .env
-# DATABASE_URL, JWT_SECRET, ANTHROPIC_API_KEY
-
-# 3. ثبّت المكتبات
 npm install
-
-# 4. ولّد Prisma Client
-npx prisma generate
-
-# 5. أنشئ قاعدة البيانات
-npx prisma db push
-
-# 6. أدخل بيانات أولية
-npm run db:seed
-
-# 7. شغّل المشروع
-npm run dev
+cp .env.example .env   # ثم عدّل القيم
 ```
 
-المشروع يعمل على: http://localhost:3000
+### 3. إعداد قاعدة البيانات
+```bash
+npx prisma generate      # توليد Prisma Client
+npx prisma db push       # إنشاء الجداول
+npm run db:seed          # زرع بيانات تجريبية (admin + user)
+```
 
-## بيانات الدخول للاختبار
+### 4. التشغيل
+```bash
+npm run dev              # وضع التطوير → http://localhost:3000
+# أو
+npm run build && npm run start   # وضع الإنتاج
+```
 
-- **مدير النظام**: admin@franchise-ready.ai / Admin@1234!
-- **مستخدم تجريبي**: test@example.com / Test@1234!
+### بيانات الدخول التجريبية (بعد db:seed)
+| الدور | البريد | كلمة المرور |
+|------|--------|-------------|
+| مدير | `admin@franchise-ready.ai` | `Admin@1234!` |
+| مستخدم | `test@example.com` | `Test@1234!` |
 
-## هيكل المشروع
+---
+
+## متغيرات البيئة (`.env`)
+
+```env
+DATABASE_URL="postgresql://user:pass@localhost:5432/franchise_ready_ai"
+JWT_SECRET="change-this-in-production"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+ANTHROPIC_API_KEY=""          # لتفعيل توليد التقرير بالذكاء الاصطناعي
+PAYMENT_PROVIDER="mock"        # mock | moyasar | hyperpay | tap
+STORAGE_PROVIDER="local"       # local | supabase
+VAT_RATE="0.15"
+PRICE_SAR="1999"
+```
+
+> إذا لم يُضبط `ANTHROPIC_API_KEY`، يعمل محرّك التقارير بنصوص بديلة (fallback)
+> لتسهيل التطوير دون استهلاك API.
+
+---
+
+## بنية المشروع
 
 ```
 src/
 ├── app/
-│   ├── page.tsx              # الصفحة الرئيسية (Landing Page)
-│   ├── login/                # تسجيل الدخول
-│   ├── register/             # إنشاء حساب
-│   ├── payment/              # الدفع
-│   ├── pricing/              # التسعير
-│   ├── terms/                # الشروط والأحكام
-│   ├── privacy/              # سياسة الخصوصية
-│   ├── dashboard/
-│   │   ├── page.tsx          # لوحة التحكم
-│   │   ├── projects/         # إدارة المشاريع
+│   ├── page.tsx                    # الصفحة التسويقية (Landing)
+│   ├── pricing/                    # التسعير
+│   ├── terms/  privacy/            # الشروط والخصوصية
+│   ├── login/  register/           # المصادقة
+│   ├── payment/                    # الدفع + callback
+│   ├── dashboard/                  # لوحة المستخدم
+│   │   ├── projects/
+│   │   │   ├── new/                # إنشاء منشأة
 │   │   │   └── [id]/
-│   │   │       ├── wizard/   # معالج جمع البيانات
-│   │   │       ├── files/    # رفع الملفات
-│   │   │       ├── review/   # مراجعة البيانات
-│   │   │       ├── score/    # درجة الجاهزية
-│   │   │       ├── preview/  # معاينة التقرير
-│   │   │       └── download/ # تحميل PDF
-│   │   ├── credits/          # رصيد المشاريع
-│   │   └── profile/          # الملف الشخصي
-│   ├── admin/
-│   │   ├── page.tsx          # لوحة الإدارة
-│   │   ├── users/            # إدارة المستخدمين
-│   │   ├── payments/         # المدفوعات
-│   │   └── projects/         # المشاريع
-│   └── api/
-│       ├── auth/             # مسارات المصادقة
-│       ├── payment/          # مسارات الدفع
-│       ├── user/             # بيانات المستخدم
-│       ├── projects/         # إدارة المشاريع
-│       └── admin/            # APIs الإدارة
+│   │   │       ├── wizard/         # جمع البيانات على مراحل
+│   │   │       ├── files/          # رفع الملفات
+│   │   │       ├── review/         # مراجعة البيانات
+│   │   │       ├── score/          # درجة الجاهزية
+│   │   │       ├── preview/        # معاينة التقرير
+│   │   │       └── download/       # تحميل PDF النهائي
+│   │   ├── credits/  profile/
+│   ├── admin/                      # لوحة الإدارة
+│   └── api/                        # كل نقاط النهاية (REST)
+├── components/layout/              # Sidebar, DashboardLayout
 ├── lib/
-│   ├── auth.ts               # المصادقة وإدارة الجلسات
-│   ├── ai.ts                 # محرك الذكاء الاصطناعي
-│   ├── payment.ts            # بوابة الدفع (adapter pattern)
-│   ├── storage.ts            # تخزين الملفات
-│   ├── db.ts                 # Prisma client
-│   ├── utils.ts              # دوال مساعدة
-│   └── wizard-config.ts      # إعدادات معالج البيانات
-├── components/
-│   └── layout/
-│       ├── Sidebar.tsx       # الشريط الجانبي
-│       └── DashboardLayout.tsx
-├── templates/
-│   └── report.html           # قالب PDF
-└── types/
-    └── index.ts              # أنواع TypeScript
+│   ├── db.ts          # Prisma client
+│   ├── auth.ts        # JWT + جلسات + bcrypt
+│   ├── payment.ts     # محوّل الدفع
+│   ├── ai.ts          # محوّل الذكاء الاصطناعي + حساب الدرجة
+│   ├── storage.ts     # محوّل التخزين
+│   └── wizard-config.ts  # تعريف أقسام وأسئلة الـ Wizard
+├── templates/report.html           # قالب تقرير PDF (RTL)
+└── middleware.ts                   # حماية المسارات
+prisma/
+├── schema.prisma                   # 11 جدولًا
+└── seed.ts
 ```
-
-## نموذج العمل
-
-- **السعر**: 1,999 ريال سعودي (+ 15% VAT)
-- **كل دفعة** = رصيد مشروع واحد
-- **كل رصيد** = تقرير منشأة واحد (100+ صفحة PDF)
-- **بعد الإصدار**: المشروع مقفل، أي تعديل يتطلب دفعة جديدة
-
-## ربط بوابة الدفع
-
-المشروع يدعم نمط الـ Adapter. لربط بوابة حقيقية:
-
-```typescript
-// في src/lib/payment.ts
-// أنشئ class جديد يطبق PaymentProvider interface
-class MoyasarProvider implements PaymentProvider {
-  async createPayment(params) { /* ... */ }
-  async verifyPayment(reference) { /* ... */ }
-}
-
-// ثم في paymentService factory:
-case "moyasar": return new MoyasarProvider()
-```
-
-ثم ضع في `.env`:
-```
-PAYMENT_PROVIDER=moyasar
-MOYASAR_API_KEY=sk_live_...
-```
-
-## توليد التقرير
-
-1. المستخدم يملأ البيانات عبر الـ Wizard (9 أقسام)
-2. يرفع الملفات (شعار، ملفات تجارية)
-3. يضغط "ابدأ التحليل" → يُرسل إلى Claude AI
-4. AI تحلل البيانات وتكتب 28 قسمًا بالعربية
-5. يُعاين التقرير ويصدر PDF احترافي
-6. يُقفل المشروع بعد الإصدار النهائي
-
-## المتغيرات البيئية
-
-| المتغير | الوصف | مطلوب |
-|---------|-------|--------|
-| DATABASE_URL | رابط PostgreSQL | ✅ |
-| JWT_SECRET | مفتاح التوقيع (32+ حرف) | ✅ |
-| ANTHROPIC_API_KEY | مفتاح API للذكاء الاصطناعي | ✅ |
-| PAYMENT_PROVIDER | mock / moyasar / tap | اختياري |
-| STORAGE_PROVIDER | local / supabase | اختياري |
-| NEXT_PUBLIC_APP_URL | رابط التطبيق | اختياري |
-| VAT_RATE | نسبة الضريبة (0.15) | اختياري |
-| PRICE_SAR | سعر الخدمة (1999) | اختياري |
-
-## الأمان
-
-- كلمات المرور مشفرة بـ bcryptjs (12 rounds)
-- الجلسات مخزنة في قاعدة البيانات
-- ملفات المستخدمين محمية بـ signed URLs
-- Rate limiting على مسارات المصادقة
-- Audit logs لكل عملية
-- منع تكرار إصدار التقرير
 
 ---
 
-بُني بواسطة: Franchise Ready AI Team
+## محرّك حساب الجاهزية (من 100)
+
+| المحور | الوزن |
+|--------|------|
+| قوة العلامة التجارية | 15 |
+| قابلية التكرار | 20 |
+| وضوح المنتج | 10 |
+| الاقتصاديات التشغيلية | 20 |
+| الأنظمة والإجراءات | 15 |
+| سلسلة التوريد | 10 |
+| الجاهزية القانونية | 10 |
+
+**التصنيف:** 85–100 جاهزة بدرجة عالية · 70–84 قابلة مع تحسينات ·
+50–69 تحتاج بناء أنظمة · أقل من 50 غير جاهزة حاليًا.
+
+---
+
+## التقرير النهائي (28 قسمًا)
+
+غلاف · إخلاء مسؤولية · فهرس · ملخص تنفيذي · ملف المنشأة · العلامة التجارية ·
+درجة الجاهزية · تقييم الوضع · تحليل المنتجات · تحليل السوق · الجاهزية التشغيلية ·
+النموذج المالي · نموذج الفرنشايز · الرسوم المقترحة · متطلبات الممنوح · دعم المانح ·
+التدريب · سلسلة التوريد · ضبط الجودة · الأدلة المطلوبة · قائمة الامتثال السعودية ·
+هيكل وثيقة الإفصاح · المخاطر والتخفيف · خارطة 90 يوم · خارطة 12 شهرًا ·
+المعلومات الناقصة · توصية المستشار · الخطوات التالية.
+
+---
+
+## النشر (Production)
+
+1. وفّر قاعدة PostgreSQL (Supabase / Neon / RDS).
+2. اضبط متغيرات البيئة في منصة الاستضافة (Vercel موصى بها).
+3. `npx prisma migrate deploy` على قاعدة الإنتاج.
+4. لتوليد PDF على Vercel استخدم `@sparticuz/chromium` مع Playwright، أو شغّل
+   التوليد على خدمة منفصلة تدعم Chromium.
+
+---
+
+## الأمان والخصوصية
+- كلمات المرور مُشفّرة (bcrypt) · جلسات JWT في قاعدة البيانات.
+- حماية المسارات عبر middleware + تحقق على مستوى كل API.
+- التحقق من نوع/حجم الملفات (حد 25MB).
+- منع التوليد النهائي المكرر وقفل المشروع بعد الإصدار.
+- موافقات صريحة (consent) قبل الدفع وقبل إرسال البيانات للتحليل.
+- لا تُستخدم بيانات المستخدمين لتدريب نماذج عامة.

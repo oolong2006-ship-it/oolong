@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server"
+import { Prisma } from "@prisma/client"
 import { db } from "@/lib/db"
 import { getSessionTokenFromRequest, verifyToken } from "@/lib/auth"
 import { WIZARD_SECTIONS } from "@/lib/wizard-config"
@@ -105,12 +106,12 @@ export async function POST(
           section,
           questionKey,
           answerValue: isJson ? null : String(value ?? ""),
-          answerJson: isJson ? (value as boolean | number | null) : null,
+          answerJson: isJson && value !== null && value !== undefined ? (value as Prisma.InputJsonValue) : Prisma.JsonNull,
           completedAt: new Date(),
         },
         update: {
           answerValue: isJson ? null : String(value ?? ""),
-          answerJson: isJson ? (value as boolean | number | null) : null,
+          answerJson: isJson && value !== null && value !== undefined ? (value as Prisma.InputJsonValue) : Prisma.JsonNull,
           completedAt: new Date(),
         },
       })
