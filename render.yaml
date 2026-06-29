@@ -10,9 +10,7 @@ services:
     startCommand: npm run start
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: franchise-db
-          property: connectionString
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: PAYMENT_PROVIDER
@@ -27,8 +25,3 @@ services:
         value: "1"
       - key: NODE_VERSION
         value: "20"
-
-databases:
-  - name: franchise-db
-    plan: free
-    databaseName: franchise_ready_ai
