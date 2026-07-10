@@ -27,6 +27,31 @@
       .toLowerCase();
   }
 
+  // ---------- إصلاح النص العربي المستخرج من PDF ----------
+  // كثير من ملفات PDF تخزّن العربية بأشكال الحروف المرسومة (Presentation Forms)
+  // وبترتيب بصري معكوس، فيخرج النص مقلوبًا ومفككًا عند الاستخراج.
+  const AR_PRESENTATION = /[ﭐ-﷿ﹰ-﻿]/;
+  const AR_ANY = /[؀-ۿݐ-ݿﭐ-﷿ﹰ-﻿]/;
+
+  function hasArabic(s) { return AR_ANY.test(String(s || '')); }
+
+  // يُطبَّق على كل مقطع نصي مستخرج من PDF:
+  // 1) NFKC يحوّل أشكال الحروف المرسومة إلى حروف عربية قياسية (ﻛ → ك، ﻻ → لا)
+  // 2) إن كان المقطع مخزّنًا بترتيب بصري معكوس، نعكس المقاطع العربية لإعادة
+  //    الترتيب المنطقي مع إبقاء الأرقام والحروف اللاتينية كما هي
+  function fixArabicText(s) {
+    s = String(s || '');
+    if (!AR_PRESENTATION.test(s)) return s; // نص سليم (مخزَّن منطقيًا) — لا نلمسه
+    // نعكس أولًا (والحروف ما تزال بأشكالها المرسومة كي تبقى الوصلات مثل ﻷ وحدة واحدة)
+    // ثم نحوّلها بـ NFKC إلى حروف قياسية بالترتيب المنطقي الصحيح
+    const runs = s.match(/(?:[؀-ۿݐ-ݿﭐ-﷿ﹰ-﻿]+|[^؀-ۿݐ-ݿﭐ-﷿ﹰ-﻿]+)/g) || [s];
+    return runs
+      .reverse()
+      .map((r) => (AR_ANY.test(r) ? [...r].reverse().join('') : r))
+      .join('')
+      .normalize('NFKC');
+  }
+
   // كلمات شائعة لا تميز الصنف (وحدات/أحجام تبقى مهمة فلا نحذفها)
   const STOP_WORDS = new Set(['من', 'مع', 'او', 'أو', 'and', 'or', 'of', 'the', 'a', 'عدد']);
 
@@ -131,7 +156,7 @@
   }
 
   window.U = {
-    normalizeArabic, tokenize, similarity, toEnDigits,
+    normalizeArabic, tokenize, similarity, toEnDigits, hasArabic, fixArabicText,
     parseNumber, fmtMoney, fmtNum, fmtPct,
     el, esc, uid, readFileAsBase64, readFileAsArrayBuffer,
   };

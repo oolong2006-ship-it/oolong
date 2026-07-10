@@ -131,13 +131,25 @@
         if (!it.str || !it.str.trim()) continue;
         const y = Math.round(it.transform[5] / 3) * 3;
         if (!rows.has(y)) rows.set(y, []);
-        rows.get(y).push({ x: it.transform[4], str: it.str });
+        // إصلاح العربية المخزّنة بأشكال مرسومة/ترتيب معكوس على مستوى كل مقطع
+        rows.get(y).push({ x: it.transform[4], w: it.width || 0, str: U.fixArabicText(it.str) });
       }
       const sorted = [...rows.entries()].sort((a, b) => b[0] - a[0]);
       for (const [, parts] of sorted) {
-        // ترتيب بصري ثابت (يسار→يمين) — التعرف على الأرقام لاحقًا لا يعتمد على الاتجاه
-        parts.sort((a, b) => a.x - b.x);
-        lines.push(parts.map((p2) => p2.str).join(' ').replace(/\s+/g, ' ').trim());
+        // اتجاه القراءة: يمين→يسار إن احتوى السطر عربية، وإلا يسار→يمين
+        const rtl = parts.some((p2) => U.hasArabic(p2.str));
+        parts.sort((a, b) => (rtl ? b.x - a.x : a.x - b.x));
+        // لا نُدخل مسافة بين مقطعين متلاصقين (حروف كلمة واحدة مقسمة لمقاطع)
+        let line = '', prev = null;
+        for (const p2 of parts) {
+          if (prev) {
+            const gap = rtl ? prev.x - (p2.x + p2.w) : p2.x - (prev.x + prev.w);
+            line += gap > 1.5 ? ' ' : '';
+          }
+          line += p2.str;
+          prev = p2;
+        }
+        lines.push(line.replace(/\s+/g, ' ').trim());
       }
     }
     return lines.filter(Boolean);
