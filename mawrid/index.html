@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0e7490" />
+  <title>مَورِد | منصة اكتشاف الموردين ومقارنة الأسعار عبر الإنترنت</title>
+  <meta name="description" content="أدخل اسم صنف واحصل على جميع الموردين المحتملين له من الإنترنت بأفضل الأسعار، مع تصفية حسب السعر والجودة ومدة التوريد، ومقارنة فورية وتنبيهات ذكية عند تغيّر الأسعار." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%AD%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">🧭</span>
+      <div>
+        <strong>مَورِد</strong>
+        <small>اكتشاف الموردين ومقارنة الأسعار عبر الإنترنت</small>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <span id="mode-badge" class="mode demo">● وضع تجريبي</span>
+      <button class="icon-btn" id="bell-btn" title="التنبيهات">🔔<span class="bell-badge" id="bell-badge">0</span></button>
+      <button class="icon-btn" id="settings-btn" title="الإعدادات">⚙️</button>
+    </div>
+  </header>
+
+  <main class="content" id="content"></main>
+
+  <!-- نافذة منبثقة عامة -->
+  <div class="modal-overlay hidden" id="modal-overlay">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <h3 id="modal-title">عنوان</h3>
+        <button class="icon-btn" id="modal-close" aria-label="إغلاق">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/util.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
